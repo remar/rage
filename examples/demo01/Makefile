@@ -6,6 +6,10 @@ ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
+GAME_ICON	:=	$(PWD)/icon.bmp
+GAME_SUBTITLE1	:=	Remar's Abstract Graphics Engine
+GAME_SUBTITLE2	:=	Weeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+
 include $(DEVKITARM)/ds_rules
 
 #---------------------------------------------------------------------------------
@@ -33,7 +37,8 @@ CFLAGS	:=	-g -Wall -O2\
 		-ffast-math \
 		$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -I../../../source
+INCLUDE +=	-I../../../source
+CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
@@ -116,7 +121,8 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds ../../source/rage.o \
+	../../source/rage.d
 
 #---------------------------------------------------------------------------------
 else
