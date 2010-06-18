@@ -33,7 +33,7 @@ struct TileSetInternal
 
 TileSetInternal tileSets[2][MAX_TILESETS];
 
-#define BACKGROUND_BLOCKS 1920
+#define BACKGROUND_BLOCKS 1792
 #define SPRITE_BLOCKS 2048
 
 char allocationBg[2][BACKGROUND_BLOCKS];
@@ -134,6 +134,10 @@ Rage::redraw()
       bgNeedsUpdate = false;
     }
 
+  swiWaitForVBlank();
+
+  // oamUpdate stuff here
+
   return 1;
 }
 
@@ -167,24 +171,19 @@ Rage::setupBackground(Engine e, int layer, int tileWidth, int tileHeight)
   w = tileWidth / 8;
   h = tileHeight / 8;
 
+  tileMapDimensions[e][layer][TILE_WIDTH] = w;
+  tileMapDimensions[e][layer][TILE_HEIGHT] = h;
+  tileMapDimensions[e][layer][MAP_WIDTH] = 32 / w + !!(32 % w);
+  tileMapDimensions[e][layer][MAP_HEIGHT] = 32 / h + !!(32 % h);
+
   if(e == MAIN)
     {
-      tileMapDimensions[MAIN][layer][TILE_WIDTH] = w;
-      tileMapDimensions[MAIN][layer][TILE_HEIGHT] = h;
-      tileMapDimensions[MAIN][layer][MAP_WIDTH] = 32 / w + !!(32 % w);
-      tileMapDimensions[MAIN][layer][MAP_HEIGHT] = 32 / h + !!(32 % h);
-
       bgID[MAIN][layer] = bgInit(layer, BgType_Text8bpp, BgSize_T_256x256,
 				 layer,
 				 1);
     }
   else
     {
-      tileMapDimensions[SUB][layer][TILE_WIDTH] = tileWidth / 8;
-      tileMapDimensions[SUB][layer][TILE_HEIGHT] = tileHeight / 8;
-      tileMapDimensions[SUB][layer][MAP_WIDTH] = 32 / w + !!(32 % w);
-      tileMapDimensions[SUB][layer][MAP_HEIGHT] = 32 / h + !!(32 % h);
-
       bgID[SUB][layer] = bgInitSub(layer, BgType_Text8bpp, BgSize_T_256x256,
 				   layer,
 				   1);
@@ -198,6 +197,12 @@ Rage::loadTileSet(Engine e, TileSetDefinition *def)
 {
   VALID_ENGINE_CHECK(e);
   VALID_VERSION_CHECK(def->version);
+
+  if(tileSets[e][def->tileSetID].loaded == true)
+    {
+      errorCode = DUPLICATE_TILESET_ID;
+      return 0;
+    }
 
   // allocate VRAM
   int blocks = def->image.gfxLen / (8*8);
@@ -240,11 +245,14 @@ Rage::setTile(Engine e, int layer, int x, int y, int tileset, int tile)
   VALID_ENGINE_CHECK(e);
   VALID_LAYER_CHECK(layer);
 
-  if(tileset < 0 || tileset > 15 || tileSets[e][tileset].loaded == false)
+  if(tileset < 0 || tileset >= MAX_TILESETS
+     || tileSets[e][tileset].loaded == false)
     {
       errorCode = BAD_TILESET_ID;
       return 0;
     }
+
+  // TODO check x and y within limits
 
   int tileWidth = tileMapDimensions[e][layer][TILE_WIDTH];
   int tileHeight = tileMapDimensions[e][layer][TILE_HEIGHT];
@@ -263,11 +271,13 @@ Rage::setTile(Engine e, int layer, int x, int y, int tileset, int tile)
 
   u16 *mapPtr = bgGetMapPtr(bgID[e][layer]);
 
+  // TODO handle edge cases (odd sized tilemap, e.g. 24x24 tiles)
+
   for(int yi = 0;yi < tileHeight;yi++)
     {
       for(int xi = 0;xi < tileWidth;xi++)
 	{
-	  mapPtr[x*tileWidth+xi+(y*tileHeight+yi)*32] = tile*tileWidth*tileHeight + xi + yi*tileWidth;
+	  mapPtr[x*tileWidth+xi+(y*tileHeight+yi)*32] = tile*tileWidth*tileHeight + xi + yi*tileWidth + tileSets[e][tileset].offset;;
 	}
     }
 

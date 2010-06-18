@@ -56,7 +56,8 @@ class Rage
       FAILED_LOAD_TILESET,
       FAILED_LOAD_SPRITE,
       BAD_PARAMETER,
-      ANIMATION_ID_COLLISION,
+      DUPLICATE_TILESET_ID,
+      DUPLICATE_ANIMATION_ID,
       OUT_OF_SPRITE_INDEXES,
       BAD_ENGINE,
       BAD_LAYER,
@@ -76,7 +77,7 @@ class Rage
   enum Type {SPRITE, BG};
 
   // In general, a method will return 0 to indicate failure
-#define FAILED(x) ((x) == 0)
+#define RAGE_FAILED(x) ((x) == 0)
 
   Rage();
   int init();
@@ -86,8 +87,10 @@ class Rage
   int setupBackground(Engine e, int layer, int tileWidth, int tileHeight);
   int loadTileSet(Engine e, TileSetDefinition *def);
   int unloadTileSet(Engine e, int tileSet);
+  int unloadAllTileSets(Engine e);
   int setTile(Engine e, int layer, int x, int y, int tileSet, int tile);
   int setMap(Engine e, int layer, Tile *map);
+  int setMap(Engine e, int layer, int tileSet, u16 *map);
 };
 
 #endif
