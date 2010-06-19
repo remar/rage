@@ -1,3 +1,9 @@
+/*
+  RAGE demo 01
+
+  The first introductory demo of Remar's Abstract Graphics Engine.
+*/
+
 #include <nds.h>
 #include <stdio.h>
 
@@ -9,32 +15,7 @@ void displayError()
 {
   consoleDemoInit();
 
-  switch(rage.getErrorCode())
-    {
-    case Rage::BAD_ENGINE:
-      printf("Bad engine provided\n");
-      break;
-
-    case Rage::BAD_LAYER:
-      printf("Bad layer provided\n");
-      break;
-
-    case Rage::BAD_TILE_DIMENSION:
-      printf("Bad tile dimension provided\n");
-      break;
-
-    case Rage::BAD_TILESET_ID:
-      printf("No such tileset\n");
-      break;
-
-    case Rage::BAD_TILE_INDEX:
-      printf("Bad tile index\n");
-      break;
-
-    default:
-      printf("Unknown error, code %d\n", rage.getErrorCode());
-      break;
-    }
+  printf("%s\n", rage.getErrorString());
 
   while(1){}
 }
@@ -46,7 +27,7 @@ int main(void)
 
   TRY(rage.init()); // setup default VRAM mappings and screen modes
 
-  TRY(rage.setupBackground(Rage::MAIN,
+  TRY(rage.setupBackground(Rage::MAIN, /* screen, Rage::MAIN or Rage::SUB */
 			   0  /* layer, 0-3, 0 in front, 3 in back */,
 			   32 /* tile width, must be divisible by 8 */,
 			   32 /* tile height, must be divisible by 8 */));
@@ -60,7 +41,7 @@ int main(void)
   // load in large (32x32) tileset on the main screen
   TRY(rage.loadTileSet(Rage::MAIN, &bonusDef));
 
-  // load in two different tilesets on the sub screen
+  // load in two different 16x16 tilesets on the sub screen
   TRY(rage.loadTileSet(Rage::SUB, &blockDef));
   TRY(rage.loadTileSet(Rage::SUB, &metroidDef));
 
@@ -74,7 +55,7 @@ int main(void)
     for(int x = 0;x < 16;x++)
       {
 	int tileset = rand()%2?BLOCK_TILESET:METROID_TILESET;
-	int tile = tileset==1?(rand()%16)+1:(rand()%3)+1;
+	int tile = tileset == BLOCK_TILESET ? (rand()%16)+1 : (rand()%3)+1;
 	TRY(rage.setTile(Rage::SUB, 0, x, y, tileset, tile));
       }
 

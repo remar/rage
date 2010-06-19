@@ -1,6 +1,8 @@
 #ifndef RAGE_INCLUDE_H
 #define RAGE_INCLUDE_H
 
+#include <nds.h>
+
 class Rage
 {
  public:
@@ -65,6 +67,8 @@ class Rage
       BAD_VERSION,
       BAD_TILESET_ID,
       BAD_TILE_INDEX,
+      BAD_TILE_COORDINATES,
+      LAST_ERROR_CODE
     };
 
   struct Tile
@@ -82,15 +86,19 @@ class Rage
   Rage();
   int init();
   ErrorCode getErrorCode();
+  const char *getErrorString();
   int redraw();
   int selectOnTop(Engine e);
   int setupBackground(Engine e, int layer, int tileWidth, int tileHeight);
   int loadTileSet(Engine e, TileSetDefinition *def);
-  int unloadTileSet(Engine e, int tileSet);
+  int unloadTileSet(Engine e, u16 tileSet);
   int unloadAllTileSets(Engine e);
-  int setTile(Engine e, int layer, int x, int y, int tileSet, int tile);
+  int setTile(Engine e, int layer, u16 x, u16 y, u16 tileSet, u16 tile);
   int setMap(Engine e, int layer, Tile *map);
   int setMap(Engine e, int layer, int tileSet, u16 *map);
+
+  // DEBUG
+  void listFreeBlocks();
 };
 
 #endif
