@@ -5,6 +5,7 @@
 
 // +INTERNAL+
 enum {TILE_WIDTH, TILE_HEIGHT, MAP_WIDTH, MAP_HEIGHT};
+enum Location {HARDWARE, INTERNAL_MAP};
 
 int bgID[2][4];
 
@@ -12,14 +13,16 @@ Rage::ErrorCode errorCode;
 Rage::Tile tileMap[2][4][32*24];
 u16 tileMapDimensions[2][4][4];
 
+u16 tileMapInternal[32*24];
+
 #define VALID_ENGINE_CHECK(x) {if(!(x == MAIN || x == SUB)) \
       {errorCode = BAD_ENGINE; return 0;}}
-#define VALID_LAYER_CHECK(x) {if(x < 0 || x > 3) \
+#define VALID_LAYER_CHECK(x) {if(x > 3) \
       {errorCode = BAD_LAYER; return 0;}}
 #define VALID_VERSION_CHECK(x) {if(x != RAGE_VERSION) \
       {errorCode = BAD_VERSION; return 0;}}
-#define VALID_TILESET_CHECK(x) {if(x < 0 || x >= MAX_TILESETS) \
-      {errorCode = BAD_TILESET_ID; return 0;}}
+#define VALID_TILESET_CHECK(x) {if(x >= MAX_TILESETS) \
+      {errorCode = Rage::BAD_TILESET_ID; return 0;}}
 
 bool bgNeedsUpdate;
 bool spriteMainNeedsUpdate;
@@ -153,6 +156,68 @@ int allocateVRAM(Rage::Engine e, Rage::Type t, int size)
 
   return -1;
 }
+
+int setTileInternal(Rage::Engine e, u16 layer, u16 x, u16 y,
+		    u16 tileSet, u16 tile, Location loc)
+{
+  VALID_TILESET_CHECK(tileSet);
+
+  if(tileSets[e][tileSet].loaded == false)
+    {
+      errorCode = Rage::BAD_TILESET_ID;
+      return 0;
+    }
+
+  if(x >= tileMapDimensions[e][layer][MAP_WIDTH]
+     || y >= tileMapDimensions[e][layer][MAP_HEIGHT])
+    {
+      errorCode = Rage::BAD_TILE_COORDINATES;
+      return 0;
+    }
+
+  int tileWidth = tileMapDimensions[e][layer][TILE_WIDTH];
+  int tileHeight = tileMapDimensions[e][layer][TILE_HEIGHT];
+
+  if(tile > tileSets[e][tileSet].size / (tileWidth * tileHeight))
+    {
+      errorCode = Rage::BAD_TILE_INDEX;
+      return 0;
+    }
+
+  u16 *mapPtr;
+
+  if(loc == HARDWARE)
+    mapPtr = bgGetMapPtr(bgID[e][layer]);
+  else if(loc == INTERNAL_MAP)
+    mapPtr = tileMapInternal;
+  else
+    {
+      errorCode = Rage::BAD_PARAMETER;
+      return 0;
+    }
+
+  int mapx, mapy;
+
+  for(int yi = 0;yi < tileHeight;yi++)
+    {
+      for(int xi = 0;xi < tileWidth;xi++)
+	{
+	  mapx = x*tileWidth+xi;
+	  if(mapx > 31) // edge reached, next line
+	    break;
+
+	  mapy = y*tileHeight+yi;
+	  if(mapy > 23) // edge reached, tile done
+	    break;
+
+	  mapPtr[mapx+mapy*32]
+	    = tile*tileWidth*tileHeight + xi + yi*tileWidth 
+	    + tileSets[e][tileSet].offset;
+	}
+    }
+
+  return 1;
+}
 // -INTERNAL-
 
 Rage::Rage()
@@ -259,7 +324,7 @@ Rage::selectOnTop(Engine e)
 }
 
 int
-Rage::setupBackground(Engine e, int layer, int tileWidth, int tileHeight)
+Rage::setupBackground(Engine e, u16 layer, u16 tileWidth, u16 tileHeight)
 {
   VALID_ENGINE_CHECK(e);
   VALID_LAYER_CHECK(layer);
@@ -277,8 +342,8 @@ Rage::setupBackground(Engine e, int layer, int tileWidth, int tileHeight)
 
   tileMapDimensions[e][layer][TILE_WIDTH] = w;
   tileMapDimensions[e][layer][TILE_HEIGHT] = h;
-  tileMapDimensions[e][layer][MAP_WIDTH] = 32 / w + !!(32 % w);
-  tileMapDimensions[e][layer][MAP_HEIGHT] = 32 / h + !!(32 % h);
+  tileMapDimensions[e][layer][MAP_WIDTH] = (32 / w) + !!(32 % w);
+  tileMapDimensions[e][layer][MAP_HEIGHT] = (24 / h) + !!(24 % h);
 
   if(e == MAIN)
     {
@@ -377,57 +442,63 @@ Rage::unloadAllTileSets(Engine e)
 }
 
 int
-Rage::setTile(Engine e, int layer, u16 x, u16 y, u16 tileSet, u16 tile)
+Rage::setTile(Engine e, u16 layer, u16 x, u16 y, u16 tileSet, u16 tile)
 {
   VALID_ENGINE_CHECK(e);
   VALID_LAYER_CHECK(layer);
-  VALID_TILESET_CHECK(tileSet);
 
-  if(tileSets[e][tileSet].loaded == false)
-    {
-      errorCode = BAD_TILESET_ID;
-      return 0;
-    }
+  return setTileInternal(e, layer, x, y, tileSet, tile, HARDWARE);
+}
 
-  if(x >= tileMapDimensions[e][layer][MAP_WIDTH]
-     || y >= tileMapDimensions[e][layer][MAP_HEIGHT])
-    {
-      errorCode = BAD_TILE_COORDINATES;
-      return 0;
-    }
+int
+Rage::setMap(Engine e, u16 layer, Tile *map)
+{
+  // write into the internal tilemap, then dmaCopy it to hardware
 
-  int tileWidth = tileMapDimensions[e][layer][TILE_WIDTH];
-  int tileHeight = tileMapDimensions[e][layer][TILE_HEIGHT];
+  VALID_ENGINE_CHECK(e);
+  VALID_LAYER_CHECK(layer);
 
-  if(tile > tileSets[e][tileSet].size / (tileWidth * tileHeight))
-    {
-      errorCode = BAD_TILE_INDEX;
-      return 0;
-    }
+  int width = tileMapDimensions[e][layer][MAP_WIDTH];
+  int height = tileMapDimensions[e][layer][MAP_HEIGHT];
+  Tile t;
 
-  u16 *mapPtr = bgGetMapPtr(bgID[e][layer]);
+  for(int y = 0;y < height;y++)
+    for(int x = 0;x < width;x++)
+      {
+	t = map[x + y * width];
+	if(!setTileInternal(e, layer, x, y, t.tileSet, t.tile, INTERNAL_MAP))
+	  return 0;
+      }
 
-  int mapx, mapy;
+  DC_FlushAll(); // make sure that the modifications are flushed to main ram
+  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[e][layer]),
+	  sizeof(tileMapInternal));
 
-  for(int yi = 0;yi < tileHeight;yi++)
-    {
-      for(int xi = 0;xi < tileWidth;xi++)
-	{
-	  mapx = x*tileWidth+xi;
-	  if(mapx > 31) // edge reached, next line
-	    break;
+  return 1;
+}
 
-	  mapy = y*tileHeight+yi;
-	  if(mapy > 23) // edge reached, tile done
-	    break;
+int
+Rage::setMap(Engine e, u16 layer, u16 tileSet, u16 *map)
+{
+  // write into the internal tilemap, then dmaCopy it to hardware
 
-	  mapPtr[mapx+mapy*32]
-	    = tile*tileWidth*tileHeight + xi + yi*tileWidth 
-	    + tileSets[e][tileSet].offset;
-	}
-    }
+  VALID_ENGINE_CHECK(e);
+  VALID_LAYER_CHECK(layer);
 
-  bgNeedsUpdate = true;
+  int width = tileMapDimensions[e][layer][MAP_WIDTH];
+  int height = tileMapDimensions[e][layer][MAP_HEIGHT];
+
+  for(int y = 0;y < height;y++)
+    for(int x = 0;x < width;x++)
+      {
+	if(!setTileInternal(e, layer, x, y, tileSet, map[x + y * width],
+			    INTERNAL_MAP))
+	  return 0;
+      }
+
+  DC_FlushAll(); // make sure that the modifications are flushed to main ram
+  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[e][layer]),
+	  sizeof(tileMapInternal));
 
   return 1;
 }
