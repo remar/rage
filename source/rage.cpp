@@ -4,64 +4,104 @@
 #include <list>
 
 // +INTERNAL+
-enum {TILE_WIDTH, TILE_HEIGHT, MAP_WIDTH, MAP_HEIGHT};
-enum Location {HARDWARE, INTERNAL_MAP};
+#include "SpriteInstance.h"
+#include "ImageCache.h"
+#include "internalstructures.h"
 
+ImageCache imageCache;
+
+// keep track of background ID returned by libnds API
 int bgID[2][4];
 
 Rage::ErrorCode errorCode;
-Rage::Tile tileMap[2][4][32*24];
+
+enum {TILE_WIDTH, TILE_HEIGHT, MAP_WIDTH, MAP_HEIGHT};
 u16 tileMapDimensions[2][4][4];
 
 u16 tileMapInternal[32*24];
 
-#define VALID_ENGINE_CHECK(x) {if(!(x == MAIN || x == SUB)) \
-      {errorCode = BAD_ENGINE; return 0;}}
+#define SPRITE_PLUS 2048
+
+#define VALID_SCREEN_CHECK(x) {if(!(x == MAIN || x == SUB)) \
+      {errorCode = BAD_SCREEN; return 0;}}
 #define VALID_LAYER_CHECK(x) {if(x > 3) \
       {errorCode = BAD_LAYER; return 0;}}
 #define VALID_VERSION_CHECK(x) {if(x != RAGE_VERSION) \
       {errorCode = BAD_VERSION; return 0;}}
 #define VALID_TILESET_CHECK(x) {if(x >= MAX_TILESETS) \
       {errorCode = Rage::BAD_TILESET_ID; return 0;}}
+#define VALID_SPRITEID_CHECK(x) {if(x >= MAX_SPRITES) \
+      {errorCode = BAD_SPRITE_ID; return 0;}}
+#define VALID_SPRITEINSTANCE_CHECK(x) {if(x < SPRITE_PLUS \
+                                          || x >= MAX_SPRITES + SPRITE_PLUS) \
+      {errorCode = BAD_SPRITE_INDEX; return 0;}}
+#define SPRITE_INDEX(x) (x & 0x7f)
+#define SPRITE_LOADED_CHECK(x) {if(spriteInstances[s][SPRITE_INDEX(x)].loaded \
+				   == false) \
+      {errorCode = BAD_SPRITE_INDEX; return 0;}}
 
 bool bgNeedsUpdate;
-bool spriteMainNeedsUpdate;
-bool spriteSubNeedsUpdate;
-
-struct TileSetInternal
-{
-  bool loaded;
-  int offset; // offset into allocated tilemem for this tileset, in blocks
-  int size; // size of this tileset in blocks (each block 64 bytes)
-};
+// bool oamMainNeedsUpdate;
+// bool oamSubNeedsUpdate;
 
 #define MAX_TILESETS 16 // quite ad hoc number for now...
 
 TileSetInternal tileSets[2][MAX_TILESETS];
 
+#define MAX_SPRITES 128
+
+SpriteDefinitionInternal spriteDefinitions[2][MAX_SPRITES];
+
+struct SpriteInstanceContainer
+{
+  bool loaded;
+  SpriteInstance *instance;
+};
+
+SpriteInstanceContainer spriteInstances[2][MAX_SPRITES];
+
+int freeSpriteInstance[2];
+bool outOfSpriteIndices[2];
+
+void locateNextSpriteIndex(Rage::Screen s)
+{
+  int initialIndex = freeSpriteInstance[s];
+
+  // Go the complete round to locate a free index
+  for(int i = 0;i < MAX_SPRITES;i++)
+    {
+      freeSpriteInstance[s]++;
+      if(freeSpriteInstance[s] == MAX_SPRITES)
+	freeSpriteInstance[s] = 0;
+
+      if(spriteInstances[s][freeSpriteInstance[s]].loaded == false)
+	break; // Found a free sprite index
+    }
+
+  if(initialIndex == freeSpriteInstance[s])
+    {
+      // Found no free sprite index,
+      outOfSpriteIndices[s] = true;
+    }
+}
+
 #define BACKGROUND_BLOCKS 1792
 #define SPRITE_BLOCKS 2048
 
-struct MemoryBlock
-{
-  int offset;
-  int length;
-};
-
 std::list<MemoryBlock> freeBlocks[2][2];
 
-void listFreeBlocksInternal(Rage::Engine e, Rage::Type t)
+void listFreeBlocksInternal(Rage::Screen s, Rage::Type t)
 {
   const char *engine_string[] = {"MAIN", "SUB "};
   const char *type_string[] = {"SPR", "BG "};
 
   printf("%s %s --------------------\n",
-	 engine_string[(int)e], type_string[(int)t]);
+	 engine_string[(int)s], type_string[(int)t]);
 
   int totalFree = 0;
 
-  std::list<MemoryBlock>::iterator it = freeBlocks[e][t].begin();
-  for(;it != freeBlocks[e][t].end();it++)
+  std::list<MemoryBlock>::iterator it = freeBlocks[s][t].begin();
+  for(;it != freeBlocks[s][t].end();it++)
     {
       int offset = (*it).offset;
       int length = (*it).length;
@@ -72,7 +112,7 @@ void listFreeBlocksInternal(Rage::Engine e, Rage::Type t)
   printf("total free %d, %d kB\n", totalFree, totalFree * 64 / 1024);
 }
 
-void addFreeBlock(Rage::Engine e, Rage::Type t, int offset, int length)
+void addFreeBlock(Rage::Screen s, Rage::Type t, int offset, int length)
 {
   // locate blocks before and after the new block and merge blocks
   MemoryBlock oldBlockBefore;
@@ -83,11 +123,11 @@ void addFreeBlock(Rage::Engine e, Rage::Type t, int offset, int length)
   oldBlockAfter.offset = -1;
   oldBlockAfter.length = 0;
 
-  std::list<MemoryBlock>::iterator it = freeBlocks[e][t].begin();
+  std::list<MemoryBlock>::iterator it = freeBlocks[s][t].begin();
 
   bool incIt; // only increase iterator if we've not removed an element
 
-  for(;it != freeBlocks[e][t].end();)
+  for(;it != freeBlocks[s][t].end();)
     {
       incIt = true;
 
@@ -95,14 +135,14 @@ void addFreeBlock(Rage::Engine e, Rage::Type t, int offset, int length)
 	{
 	  oldBlockBefore = (*it);
 
-	  it = freeBlocks[e][t].erase(it);
+	  it = freeBlocks[s][t].erase(it);
 	  incIt = false;
 	}
       if((*it).offset == offset + length)
 	{
 	  oldBlockAfter = (*it);
 
-	  it = freeBlocks[e][t].erase(it);
+	  it = freeBlocks[s][t].erase(it);
 	  incIt = false;
 	}
 
@@ -127,14 +167,14 @@ void addFreeBlock(Rage::Engine e, Rage::Type t, int offset, int length)
       freeBlock.length += oldBlockAfter.length;
     }
 
-  freeBlocks[e][t].push_back(freeBlock);
+  freeBlocks[s][t].push_back(freeBlock);
 }
 
-int allocateVRAM(Rage::Engine e, Rage::Type t, int size)
+int allocateVRAM(Rage::Screen s, Rage::Type t, int size)
 {
-  std::list<MemoryBlock>::iterator it = freeBlocks[e][t].begin();
+  std::list<MemoryBlock>::iterator it = freeBlocks[s][t].begin();
 
-  for(;it != freeBlocks[e][t].end();it++)
+  for(;it != freeBlocks[s][t].end();it++)
     {
       if((*it).length >= size)
 	{
@@ -143,11 +183,11 @@ int allocateVRAM(Rage::Engine e, Rage::Type t, int size)
 	  int length = (*it).length;
 
 	  // Remove block from list
-	  freeBlocks[e][t].erase(it);
+	  freeBlocks[s][t].erase(it);
 	  
 	  // Add new block of size 'length - size' and offset 'offset + size'
 	  if(length - size > 0)
-	    addFreeBlock(e, t, offset + size, length - size);
+	    addFreeBlock(s, t, offset + size, length - size);
 
 	  // Return offset into VRAM
 	  return offset << 6; // multiply by 64
@@ -157,28 +197,30 @@ int allocateVRAM(Rage::Engine e, Rage::Type t, int size)
   return -1;
 }
 
-int setTileInternal(Rage::Engine e, u16 layer, u16 x, u16 y,
+enum Location {HARDWARE, INTERNAL_MAP}; // where to set tile
+
+int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
 		    u16 tileSet, u16 tile, Location loc)
 {
   VALID_TILESET_CHECK(tileSet);
 
-  if(tileSets[e][tileSet].loaded == false)
+  if(tileSets[s][tileSet].loaded == false)
     {
       errorCode = Rage::BAD_TILESET_ID;
       return 0;
     }
 
-  if(x >= tileMapDimensions[e][layer][MAP_WIDTH]
-     || y >= tileMapDimensions[e][layer][MAP_HEIGHT])
+  if(x >= tileMapDimensions[s][layer][MAP_WIDTH]
+     || y >= tileMapDimensions[s][layer][MAP_HEIGHT])
     {
       errorCode = Rage::BAD_TILE_COORDINATES;
       return 0;
     }
 
-  int tileWidth = tileMapDimensions[e][layer][TILE_WIDTH];
-  int tileHeight = tileMapDimensions[e][layer][TILE_HEIGHT];
+  int tileWidth = tileMapDimensions[s][layer][TILE_WIDTH];
+  int tileHeight = tileMapDimensions[s][layer][TILE_HEIGHT];
 
-  if(tile > tileSets[e][tileSet].size / (tileWidth * tileHeight))
+  if(tile > tileSets[s][tileSet].size / (tileWidth * tileHeight))
     {
       errorCode = Rage::BAD_TILE_INDEX;
       return 0;
@@ -187,7 +229,7 @@ int setTileInternal(Rage::Engine e, u16 layer, u16 x, u16 y,
   u16 *mapPtr;
 
   if(loc == HARDWARE)
-    mapPtr = bgGetMapPtr(bgID[e][layer]);
+    mapPtr = bgGetMapPtr(bgID[s][layer]);
   else if(loc == INTERNAL_MAP)
     mapPtr = tileMapInternal;
   else
@@ -212,7 +254,7 @@ int setTileInternal(Rage::Engine e, u16 layer, u16 x, u16 y,
 
 	  mapPtr[mapx+mapy*32]
 	    = tile*tileWidth*tileHeight + xi + yi*tileWidth 
-	    + tileSets[e][tileSet].offset;
+	    + tileSets[s][tileSet].offset;
 	}
     }
 
@@ -224,23 +266,34 @@ Rage::Rage()
 {
   errorCode = NO_ERROR;
   bgNeedsUpdate = false;
-  spriteMainNeedsUpdate = false;
-  spriteSubNeedsUpdate = false;
+//   oamMainNeedsUpdate = false;
+//   oamSubNeedsUpdate = false;
 
   for(int i = 0;i < MAX_TILESETS;i++)
     {
       tileSets[MAIN][i].loaded = false;
       tileSets[SUB][i].loaded = false;
     }
+
+  for(int i = 0;i < MAX_SPRITES;i++)
+    {
+      spriteInstances[MAIN][i].loaded = false;
+      spriteInstances[SUB][i].loaded = false;
+    }
+
+  freeSpriteInstance[MAIN] = 0;
+  freeSpriteInstance[SUB]  = 0;
+  outOfSpriteIndices[MAIN] = false;
+  outOfSpriteIndices[SUB]  = false;
 }
 
 void initAllocator()
 {
   // Initialize list of free blocks in VRAM
   addFreeBlock(Rage::MAIN, Rage::SPRITE, 0, SPRITE_BLOCKS);
-  addFreeBlock(Rage::SUB, Rage::SPRITE, 0, SPRITE_BLOCKS);
-  addFreeBlock(Rage::MAIN, Rage::BG, 0, BACKGROUND_BLOCKS);
-  addFreeBlock(Rage::SUB, Rage::BG, 0, BACKGROUND_BLOCKS);
+  addFreeBlock(Rage::SUB,  Rage::SPRITE, 0, SPRITE_BLOCKS);
+  addFreeBlock(Rage::MAIN, Rage::BG,     0, BACKGROUND_BLOCKS);
+  addFreeBlock(Rage::SUB,  Rage::BG,     0, BACKGROUND_BLOCKS);
 }
 
 int
@@ -255,6 +308,9 @@ Rage::init()
   vramSetBankD(VRAM_D_SUB_SPRITE);
 
   initAllocator();
+
+  oamInit(&oamMain, SpriteMapping_1D_32, false);
+  oamInit(&oamSub, SpriteMapping_1D_32, false);
 
   return 1;
 }
@@ -276,15 +332,19 @@ Rage::getErrorString()
       "Failed to load sprite",
       "Bad parameter",
       "Tileset ID already in use",
-      "Animation ID already in use",
+      "Sprite ID already in use",
       "Out of sprite indexes",
-      "Bad engine provided",
+      "Bad screen provided",
       "Bad layer provided",
       "Bad tile dimension",
       "Bad version",
       "Bad tileset ID",
       "Bad tile index",
       "Bad tile coordinates",
+      "Bad sprite ID",
+      "Bad sprite dimension",
+      "Bad sprite instance",
+      "No such sprite loaded",
     };
 
   if(errorCode < NO_ERROR || errorCode >= LAST_ERROR_CODE)
@@ -303,30 +363,45 @@ Rage::redraw()
       bgNeedsUpdate = false;
     }
 
+  // animate sprites
+  for(int i = 0;i < MAX_SPRITES;i++)
+    {
+      if(spriteInstances[Rage::MAIN][i].loaded)
+	{
+	  spriteInstances[Rage::MAIN][i].instance->animate();
+	}
+      if(spriteInstances[Rage::SUB][i].loaded)
+	{
+	  spriteInstances[Rage::SUB][i].instance->animate();
+	}
+    }
+
   swiWaitForVBlank();
 
   // oamUpdate stuff here
+  oamUpdate(&oamMain);
+  oamUpdate(&oamSub);
 
   return 1;
 }
 
 int
-Rage::selectOnTop(Engine e)
+Rage::selectOnTop(Screen s)
 {
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   
-  if(e == MAIN)
+  if(s == MAIN)
     lcdMainOnTop();
-  else if(e == SUB)
+  else
     lcdMainOnBottom();
 
   return 1;
 }
 
 int
-Rage::setupBackground(Engine e, u16 layer, u16 tileWidth, u16 tileHeight)
+Rage::setupBackground(Screen s, u16 layer, u16 tileWidth, u16 tileHeight)
 {
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
   
   if(tileWidth < 8 || (tileWidth % 8) != 0
@@ -340,12 +415,12 @@ Rage::setupBackground(Engine e, u16 layer, u16 tileWidth, u16 tileHeight)
   w = tileWidth / 8;
   h = tileHeight / 8;
 
-  tileMapDimensions[e][layer][TILE_WIDTH] = w;
-  tileMapDimensions[e][layer][TILE_HEIGHT] = h;
-  tileMapDimensions[e][layer][MAP_WIDTH] = (32 / w) + !!(32 % w);
-  tileMapDimensions[e][layer][MAP_HEIGHT] = (24 / h) + !!(24 % h);
+  tileMapDimensions[s][layer][TILE_WIDTH] = w;
+  tileMapDimensions[s][layer][TILE_HEIGHT] = h;
+  tileMapDimensions[s][layer][MAP_WIDTH] = (32 / w) + !!(32 % w);
+  tileMapDimensions[s][layer][MAP_HEIGHT] = (24 / h) + !!(24 % h);
 
-  if(e == MAIN)
+  if(s == MAIN)
     {
       bgID[MAIN][layer] = bgInit(layer, BgType_Text8bpp, BgSize_T_256x256,
 				 layer,
@@ -362,12 +437,13 @@ Rage::setupBackground(Engine e, u16 layer, u16 tileWidth, u16 tileHeight)
 }
 
 int
-Rage::loadTileSet(Engine e, TileSetDefinition *def)
+Rage::loadTileSet(Screen s, TileSetDefinition *def)
 {
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   VALID_VERSION_CHECK(def->version);
+  VALID_TILESET_CHECK(def->tileSetID);
 
-  if(tileSets[e][def->tileSetID].loaded == true)
+  if(tileSets[s][def->tileSetID].loaded == true)
     {
       errorCode = DUPLICATE_TILESET_ID;
       return 0;
@@ -375,7 +451,7 @@ Rage::loadTileSet(Engine e, TileSetDefinition *def)
 
   // allocate VRAM
   int blocks = def->image.gfxLen >> 6; // divide by 64;
-  int offset = allocateVRAM(e, BG, blocks);
+  int offset = allocateVRAM(s, BG, blocks);
 
   if(offset == -1)
     {
@@ -390,7 +466,7 @@ Rage::loadTileSet(Engine e, TileSetDefinition *def)
     }
 
   // copy tile graphics to VRAM and palette to palette area
-  if(e == MAIN)
+  if(s == MAIN)
     {
       dmaCopy(def->image.gfx, (u16*)(0x06004000 + offset), def->image.gfxLen);
       dmaCopy(def->image.pal, BG_PALETTE, def->image.palLen);
@@ -401,104 +477,296 @@ Rage::loadTileSet(Engine e, TileSetDefinition *def)
       dmaCopy(def->image.pal, BG_PALETTE_SUB, def->image.palLen);
     }
 
-  tileSets[e][def->tileSetID].loaded = true;
-  tileSets[e][def->tileSetID].offset = offset >> 6; // divide by 64;
-  tileSets[e][def->tileSetID].size = blocks;
+  tileSets[s][def->tileSetID].loaded = true;
+  tileSets[s][def->tileSetID].offset = offset >> 6; // divide by 64;
+  tileSets[s][def->tileSetID].size = blocks;
 
   return 1;
 }
 
 int
-Rage::unloadTileSet(Engine e, u16 tileSet)
+Rage::unloadTileSet(Screen s, u16 tileSet)
 {
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   VALID_TILESET_CHECK(tileSet);
 
-  if(tileSets[e][tileSet].loaded == false)
+  if(tileSets[s][tileSet].loaded == false)
     {
       errorCode = BAD_TILESET_ID;
       return 0;
     }
 
-  tileSets[e][tileSet].loaded = false;
+  tileSets[s][tileSet].loaded = false;
 
   // deallocate VRAM
-  addFreeBlock(e, Rage::BG, 
-	       tileSets[e][tileSet].offset, tileSets[e][tileSet].size);
+  addFreeBlock(s, Rage::BG, 
+	       tileSets[s][tileSet].offset, tileSets[s][tileSet].size);
 
   return 1;
 }
 
 int
-Rage::unloadAllTileSets(Engine e)
+Rage::unloadAllTileSets(Screen s)
 {
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
 
   for(int i = 0;i < MAX_TILESETS;i++)
-    if(tileSets[e][i].loaded)
-      unloadTileSet(e, i);
+    if(tileSets[s][i].loaded)
+      unloadTileSet(s, i);
 
   return 1;
 }
 
 int
-Rage::setTile(Engine e, u16 layer, u16 x, u16 y, u16 tileSet, u16 tile)
+Rage::setTile(Screen s, u16 layer, u16 x, u16 y, u16 tileSet, u16 tile)
 {
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
 
-  return setTileInternal(e, layer, x, y, tileSet, tile, HARDWARE);
+  return setTileInternal(s, layer, x, y, tileSet, tile, HARDWARE);
 }
 
 int
-Rage::setMap(Engine e, u16 layer, Tile *map)
+Rage::setMap(Screen s, u16 layer, Tile *map)
 {
   // write into the internal tilemap, then dmaCopy it to hardware
 
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
 
-  int width = tileMapDimensions[e][layer][MAP_WIDTH];
-  int height = tileMapDimensions[e][layer][MAP_HEIGHT];
+  int width = tileMapDimensions[s][layer][MAP_WIDTH];
+  int height = tileMapDimensions[s][layer][MAP_HEIGHT];
   Tile t;
 
   for(int y = 0;y < height;y++)
     for(int x = 0;x < width;x++)
       {
 	t = map[x + y * width];
-	if(!setTileInternal(e, layer, x, y, t.tileSet, t.tile, INTERNAL_MAP))
+	if(!setTileInternal(s, layer, x, y, t.tileSet, t.tile, INTERNAL_MAP))
 	  return 0;
       }
 
   DC_FlushAll(); // make sure that the modifications are flushed to main ram
-  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[e][layer]),
+  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[s][layer]),
 	  sizeof(tileMapInternal));
 
   return 1;
 }
 
 int
-Rage::setMap(Engine e, u16 layer, u16 tileSet, u16 *map)
+Rage::setMap(Screen s, u16 layer, u16 tileSet, u16 *map)
 {
   // write into the internal tilemap, then dmaCopy it to hardware
 
-  VALID_ENGINE_CHECK(e);
+  VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
 
-  int width = tileMapDimensions[e][layer][MAP_WIDTH];
-  int height = tileMapDimensions[e][layer][MAP_HEIGHT];
+  int width = tileMapDimensions[s][layer][MAP_WIDTH];
+  int height = tileMapDimensions[s][layer][MAP_HEIGHT];
 
   for(int y = 0;y < height;y++)
     for(int x = 0;x < width;x++)
       {
-	if(!setTileInternal(e, layer, x, y, tileSet, map[x + y * width],
+	if(!setTileInternal(s, layer, x, y, tileSet, map[x + y * width],
 			    INTERNAL_MAP))
 	  return 0;
       }
 
   DC_FlushAll(); // make sure that the modifications are flushed to main ram
-  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[e][layer]),
+  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[s][layer]),
 	  sizeof(tileMapInternal));
+
+  return 1;
+}
+
+int
+Rage::loadSprite(Screen s, SpriteDefinition *def)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_VERSION_CHECK(def->version);
+  VALID_SPRITEID_CHECK(def->spriteID);
+
+  if(spriteDefinitions[s][def->spriteID].loaded == true)
+    {
+      errorCode = DUPLICATE_SPRITE_ID;
+      return 0;
+    }
+
+  // copy sprite structure
+  int animCount = def->animationCount;
+  spriteDefinitions[s][def->spriteID].animations = new Animation[animCount];
+  spriteDefinitions[s][def->spriteID].animationCount = animCount;
+
+  for(int i = 0;i < animCount;i++)
+    {
+      // Nullify to be able to delete frames if load fails
+      spriteDefinitions[s][def->spriteID].animations[i].frames = 0;
+    }
+
+  bool invalidSpriteDimension = false;
+
+  for(int i = 0;i < animCount;i++)
+    {
+      int frmCount = def->animations[i].frameCount;
+      Frame *frames = new Frame[frmCount];
+      for(int j = 0;j < frmCount;j++)
+	{
+	  frames[j] = def->animations[i].frames[j];
+	}
+
+      spriteDefinitions[s][def->spriteID].animations[i].image
+	= def->animations[i].image;
+      spriteDefinitions[s][def->spriteID].animations[i].size
+	= def->animations[i].size;
+      spriteDefinitions[s][def->spriteID].animations[i].looping
+	= def->animations[i].looping;
+      spriteDefinitions[s][def->spriteID].animations[i].frameCount = frmCount;
+      spriteDefinitions[s][def->spriteID].animations[i].frames = frames;
+    }
+
+  if(invalidSpriteDimension)
+    {
+      for(int i = 0;i < animCount;i++)
+	delete [] spriteDefinitions[s][def->spriteID].animations[i].frames;
+      delete [] spriteDefinitions[s][def->spriteID].animations;
+
+      errorCode = BAD_SPRITE_DIMENSION;
+
+      return 0;
+    }
+
+  spriteDefinitions[s][def->spriteID].loaded = true;
+
+#if 0 // DEBUG
+  consoleDemoInit();
+  for(int i = 0;i < spriteDefinitions[s][def->spriteID].animationCount;i++)
+    {
+      Animation *a = &spriteDefinitions[s][def->spriteID].animations[i];
+      printf("[animation %d (%dx%d) %slooping]\n", i, a->width,
+	     a->height, a->looping?"":"!");
+      printf("image 0x%X\n", (int)a->image.gfx);
+      for(int j = 0;j < a->frameCount;j++)
+	{
+	  printf("frame %d: index %d, dur %d\n", j,
+		 a->frames[j].index,
+		 a->frames[j].duration);
+	}
+    }
+  while(1);
+#endif
+
+  return 1;
+}
+
+int
+Rage::unloadSprite(Screen s, int sprite)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEID_CHECK(sprite);
+
+  SpriteDefinitionInternal *spr = &spriteDefinitions[s][sprite];
+
+  if(spr->loaded == false)
+    {
+      errorCode = BAD_SPRITE_ID;
+      return 0;
+    }
+
+  // go through animations deleting frames, then delete animations
+  for(int i = 0;i < spr->animationCount;i++)
+    {
+      delete [] spr->animations[i].frames;
+    }
+
+  delete [] spr->animations;
+
+  spr->loaded = false;
+
+  return 1;
+}
+
+int
+Rage::createSpriteInstance(Screen s, int sprite)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEID_CHECK(sprite);
+
+  if(spriteDefinitions[s][sprite].loaded == false)
+    {
+      errorCode = SPRITE_NOT_LOADED;
+      return 0;
+    }
+
+  if(outOfSpriteIndices[s])
+    {
+      errorCode = OUT_OF_SPRITE_INDEXES;
+      return 0;
+    }
+
+  // Locate a free sprite slot
+  int spriteIndex = freeSpriteInstance[s];
+  locateNextSpriteIndex(s);
+
+  spriteInstances[s][spriteIndex].instance
+    = new SpriteInstance(&spriteDefinitions[s][sprite], &imageCache, s,
+			 spriteIndex);
+  spriteInstances[s][spriteIndex].loaded = true;
+
+  return spriteIndex + SPRITE_PLUS; // return sprite handle
+}
+
+int
+Rage::removeSpriteInstance(Screen s, int sprite)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEINSTANCE_CHECK(sprite);
+
+  int index = SPRITE_INDEX(sprite);
+
+  if(spriteInstances[s][index].loaded == false)
+    {
+      errorCode = BAD_SPRITE_INDEX;
+      return 0;
+    }
+
+  // TODO hide sprite in oam
+
+  delete spriteInstances[s][index].instance;
+  spriteInstances[s][index].loaded = false;
+
+  if(outOfSpriteIndices[s])
+    {
+      freeSpriteInstance[s] = index;
+      outOfSpriteIndices[s] = false;
+    }
+
+  return 1;
+}
+
+int
+Rage::selectAnimation(Screen s, int sprite, int animation)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEINSTANCE_CHECK(sprite);
+  SPRITE_LOADED_CHECK(sprite);
+
+  int index = SPRITE_INDEX(sprite);
+
+  spriteInstances[s][index].instance->setAnimation(animation);
+
+  return 1;
+}
+
+int
+Rage::moveSpriteAbs(Screen s, int sprite, int x, int y)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEINSTANCE_CHECK(sprite);
+  SPRITE_LOADED_CHECK(sprite);
+
+  int index = SPRITE_INDEX(sprite);
+
+  spriteInstances[s][index].instance->moveAbs(x, y);
 
   return 1;
 }
