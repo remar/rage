@@ -17,10 +17,4 @@ struct SpriteDefinitionInternal
   Rage::Animation *animations;
 };
 
-struct MemoryBlock
-{
-  int offset;
-  int length;
-};
-
 #endif

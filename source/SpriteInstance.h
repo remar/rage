@@ -15,8 +15,8 @@ class SpriteInstance
   bool animate();
 
   void setVisible(bool visible);
-  void moveRel(int x, int y);
   void moveAbs(int x, int y);
+  void moveRel(int x, int y);
   int x, y;
 
  private:

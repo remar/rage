@@ -1,0 +1,5 @@
+# TODO This will be replaced with a single -lrage later on
+RAGE := ../../../source
+RAGEFILES := $(RAGE)/rage.cpp $(RAGE)/SpriteInstance.cpp \
+	     $(RAGE)/ImageCache.cpp $(RAGE)/Allocator.cpp
+

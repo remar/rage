@@ -3,6 +3,9 @@
 
 struct CacheEntry
 {
+  int *vramOffsets; // offsets into VRAM for the frames and
+  int vramBlocks; // blocks in VRAM taken up per block, used by allocator
+
   int frameCount;
   u16 **frames;
   int refCount; // keep track of references to this entry
@@ -10,9 +13,10 @@ struct CacheEntry
 
 std::map<const u16*,CacheEntry *> cache[2];
 
-ImageCache::ImageCache()
+ImageCache::ImageCache(Allocator *allocator)
+  : allocator(allocator)
 {
-
+  
 }
 
 int getFrameWidth(SpriteSize frameSize)
@@ -96,15 +100,20 @@ ImageCache::get(Rage::Screen s, Rage::ImageDefinition *imageDef,
   int frameCount = imageDef->gfxLen / size;
 
   u16 **frames = new u16*[frameCount];
+  int *vramOffsets = new int[frameCount];
 
   OamState *oam;
   oam = s == Rage::MAIN ? &oamMain : &oamSub;
 
   const u16 *gfx = imageDef->gfx;
 
+  u16 *screenOffset = (s == Rage::MAIN ? (u16*)0x06400000 : (u16*)0x06600000);
+
   for(int i = 0;i < frameCount;i++)
     {
-      frames[i] = oamAllocateGfx(oam, frameSize, SpriteColorFormat_256Color);
+      vramOffsets[i] = allocator->allocateVRAM(s, Rage::SPRITE, size >> 6)>>6;
+      frames[i] = (vramOffsets[i]<<6) + screenOffset;
+
       dmaCopy(gfx, frames[i], size);
 
       gfx += size >> 1; // gfx is a u16, hence the divide by 2 (>> 1)
@@ -118,6 +127,9 @@ ImageCache::get(Rage::Screen s, Rage::ImageDefinition *imageDef,
   entry->frameCount = frameCount;
   entry->frames = frames;
   entry->refCount = 1;
+
+  entry->vramOffsets = vramOffsets;
+  entry->vramBlocks = size >> 6;
 
   cache[s][imageDef->gfx] = entry;
 
@@ -138,9 +150,11 @@ ImageCache::unload(Rage::Screen s, Rage::ImageDefinition *imageDef)
 
 	  for(int i = 0;i < entry->frameCount;i++)
 	    {
-	      oamFreeGfx(oam, entry->frames[i]);
+	      allocator->addFreeBlock(s, Rage::SPRITE, entry->vramOffsets[i],
+				      entry->vramBlocks);
 	    }
 	  delete [] entry->frames;
+	  delete [] entry->vramOffsets;
 	  delete entry;
 
 	  cache[s][imageDef->gfx] = 0;

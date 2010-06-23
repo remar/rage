@@ -1,14 +1,15 @@
 #include "rage.h"
 
 #include <stdio.h>
-#include <list>
 
 // +INTERNAL+
 #include "SpriteInstance.h"
 #include "ImageCache.h"
+#include "Allocator.h"
 #include "internalstructures.h"
 
-ImageCache imageCache;
+Allocator allocator;
+ImageCache imageCache(&allocator);
 
 // keep track of background ID returned by libnds API
 int bgID[2][4];
@@ -41,8 +42,6 @@ u16 tileMapInternal[32*24];
       {errorCode = BAD_SPRITE_INDEX; return 0;}}
 
 bool bgNeedsUpdate;
-// bool oamMainNeedsUpdate;
-// bool oamSubNeedsUpdate;
 
 #define MAX_TILESETS 16 // quite ad hoc number for now...
 
@@ -62,6 +61,7 @@ SpriteInstanceContainer spriteInstances[2][MAX_SPRITES];
 
 int freeSpriteInstance[2];
 bool outOfSpriteIndices[2];
+int spriteInstancesLeft[2];
 
 void locateNextSpriteIndex(Rage::Screen s)
 {
@@ -83,118 +83,6 @@ void locateNextSpriteIndex(Rage::Screen s)
       // Found no free sprite index,
       outOfSpriteIndices[s] = true;
     }
-}
-
-#define BACKGROUND_BLOCKS 1792
-#define SPRITE_BLOCKS 2048
-
-std::list<MemoryBlock> freeBlocks[2][2];
-
-void listFreeBlocksInternal(Rage::Screen s, Rage::Type t)
-{
-  const char *engine_string[] = {"MAIN", "SUB "};
-  const char *type_string[] = {"SPR", "BG "};
-
-  printf("%s %s --------------------\n",
-	 engine_string[(int)s], type_string[(int)t]);
-
-  int totalFree = 0;
-
-  std::list<MemoryBlock>::iterator it = freeBlocks[s][t].begin();
-  for(;it != freeBlocks[s][t].end();it++)
-    {
-      int offset = (*it).offset;
-      int length = (*it).length;
-      printf("offset %d, length %d\n", offset, length);
-      totalFree += length;
-    }
-  
-  printf("total free %d, %d kB\n", totalFree, totalFree * 64 / 1024);
-}
-
-void addFreeBlock(Rage::Screen s, Rage::Type t, int offset, int length)
-{
-  // locate blocks before and after the new block and merge blocks
-  MemoryBlock oldBlockBefore;
-  MemoryBlock oldBlockAfter;
-
-  oldBlockBefore.offset = -1;
-  oldBlockBefore.length = 0;
-  oldBlockAfter.offset = -1;
-  oldBlockAfter.length = 0;
-
-  std::list<MemoryBlock>::iterator it = freeBlocks[s][t].begin();
-
-  bool incIt; // only increase iterator if we've not removed an element
-
-  for(;it != freeBlocks[s][t].end();)
-    {
-      incIt = true;
-
-      if((*it).offset + (*it).length == offset)
-	{
-	  oldBlockBefore = (*it);
-
-	  it = freeBlocks[s][t].erase(it);
-	  incIt = false;
-	}
-      if((*it).offset == offset + length)
-	{
-	  oldBlockAfter = (*it);
-
-	  it = freeBlocks[s][t].erase(it);
-	  incIt = false;
-	}
-
-      if(oldBlockBefore.offset != -1 && oldBlockAfter.offset != -1)
-	break; // found blocks before and after
-
-      if(incIt)
-	it++;
-    }
-
-  MemoryBlock freeBlock;
-  freeBlock.offset = offset;
-  freeBlock.length = length;
-
-  if(oldBlockBefore.offset != -1)
-    {
-      freeBlock.offset = oldBlockBefore.offset;
-      freeBlock.length += oldBlockBefore.length;
-    }
-  if(oldBlockAfter.offset != -1)
-    {
-      freeBlock.length += oldBlockAfter.length;
-    }
-
-  freeBlocks[s][t].push_back(freeBlock);
-}
-
-int allocateVRAM(Rage::Screen s, Rage::Type t, int size)
-{
-  std::list<MemoryBlock>::iterator it = freeBlocks[s][t].begin();
-
-  for(;it != freeBlocks[s][t].end();it++)
-    {
-      if((*it).length >= size)
-	{
-	  // Found free block
-	  int offset = (*it).offset;
-	  int length = (*it).length;
-
-	  // Remove block from list
-	  freeBlocks[s][t].erase(it);
-	  
-	  // Add new block of size 'length - size' and offset 'offset + size'
-	  if(length - size > 0)
-	    addFreeBlock(s, t, offset + size, length - size);
-
-	  // Return offset into VRAM
-	  return offset << 6; // multiply by 64
-	}
-    }
-
-  return -1;
 }
 
 enum Location {HARDWARE, INTERNAL_MAP}; // where to set tile
@@ -266,8 +154,6 @@ Rage::Rage()
 {
   errorCode = NO_ERROR;
   bgNeedsUpdate = false;
-//   oamMainNeedsUpdate = false;
-//   oamSubNeedsUpdate = false;
 
   for(int i = 0;i < MAX_TILESETS;i++)
     {
@@ -285,15 +171,8 @@ Rage::Rage()
   freeSpriteInstance[SUB]  = 0;
   outOfSpriteIndices[MAIN] = false;
   outOfSpriteIndices[SUB]  = false;
-}
-
-void initAllocator()
-{
-  // Initialize list of free blocks in VRAM
-  addFreeBlock(Rage::MAIN, Rage::SPRITE, 0, SPRITE_BLOCKS);
-  addFreeBlock(Rage::SUB,  Rage::SPRITE, 0, SPRITE_BLOCKS);
-  addFreeBlock(Rage::MAIN, Rage::BG,     0, BACKGROUND_BLOCKS);
-  addFreeBlock(Rage::SUB,  Rage::BG,     0, BACKGROUND_BLOCKS);
+  spriteInstancesLeft[MAIN] = 128;
+  spriteInstancesLeft[SUB]  = 128;
 }
 
 int
@@ -306,8 +185,6 @@ Rage::init()
   videoSetModeSub(MODE_0_2D);
   vramSetBankC(VRAM_C_SUB_BG_0x06200000);
   vramSetBankD(VRAM_D_SUB_SPRITE);
-
-  initAllocator();
 
   oamInit(&oamMain, SpriteMapping_1D_32, false);
   oamInit(&oamSub, SpriteMapping_1D_32, false);
@@ -451,7 +328,7 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
 
   // allocate VRAM
   int blocks = def->image.gfxLen >> 6; // divide by 64;
-  int offset = allocateVRAM(s, BG, blocks);
+  int offset = allocator.allocateVRAM(s, BG, blocks);
 
   if(offset == -1)
     {
@@ -499,8 +376,9 @@ Rage::unloadTileSet(Screen s, u16 tileSet)
   tileSets[s][tileSet].loaded = false;
 
   // deallocate VRAM
-  addFreeBlock(s, Rage::BG, 
-	       tileSets[s][tileSet].offset, tileSets[s][tileSet].size);
+  allocator.addFreeBlock(s, Rage::BG, 
+			 tileSets[s][tileSet].offset,
+			 tileSets[s][tileSet].size);
 
   return 1;
 }
@@ -712,6 +590,8 @@ Rage::createSpriteInstance(Screen s, int sprite)
 			 spriteIndex);
   spriteInstances[s][spriteIndex].loaded = true;
 
+  spriteInstancesLeft[s]--;
+
   return spriteIndex + SPRITE_PLUS; // return sprite handle
 }
 
@@ -729,7 +609,7 @@ Rage::removeSpriteInstance(Screen s, int sprite)
       return 0;
     }
 
-  // TODO hide sprite in oam
+  spriteInstances[s][index].instance->setVisible(false);
 
   delete spriteInstances[s][index].instance;
   spriteInstances[s][index].loaded = false;
@@ -739,6 +619,8 @@ Rage::removeSpriteInstance(Screen s, int sprite)
       freeSpriteInstance[s] = index;
       outOfSpriteIndices[s] = false;
     }
+
+  spriteInstancesLeft[s]++;
 
   return 1;
 }
@@ -758,6 +640,20 @@ Rage::selectAnimation(Screen s, int sprite, int animation)
 }
 
 int
+Rage::showSprite(Screen s, int sprite, bool show)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEINSTANCE_CHECK(sprite);
+  SPRITE_LOADED_CHECK(sprite);
+
+  int index = SPRITE_INDEX(sprite);
+
+  spriteInstances[s][index].instance->setVisible(show);
+
+  return 1;
+}
+
+int
 Rage::moveSpriteAbs(Screen s, int sprite, int x, int y)
 {
   VALID_SCREEN_CHECK(s);
@@ -771,13 +667,43 @@ Rage::moveSpriteAbs(Screen s, int sprite, int x, int y)
   return 1;
 }
 
+int
+Rage::moveSpriteRel(Screen s, int sprite, int x, int y)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_SPRITEINSTANCE_CHECK(sprite);
+  SPRITE_LOADED_CHECK(sprite);
+
+  int index = SPRITE_INDEX(sprite);
+
+  spriteInstances[s][index].instance->moveRel(x, y);
+
+  return 1;
+}
+
+int
+Rage::getFreeMem(Screen s, Type t)
+{
+  return allocator.sumFreeBlocks(s, t) << 6;
+}
+
+int
+Rage::getLargestFreeBlock(Screen s, Type t)
+{
+  return allocator.largestFreeBlock(s, t) << 6;
+}
+
+int
+Rage::getAvailableSprites(Screen s)
+{
+  return spriteInstancesLeft[s];
+}
+
 void
 Rage::listFreeBlocks()
 {
-  consoleDemoInit();
-  listFreeBlocksInternal(MAIN, SPRITE);
-  listFreeBlocksInternal(MAIN, BG);
-  listFreeBlocksInternal(SUB, SPRITE);
-  listFreeBlocksInternal(SUB, BG);
-  while(1);
+  allocator.listFreeBlocks(MAIN, SPRITE);
+  allocator.listFreeBlocks(MAIN, BG);
+  allocator.listFreeBlocks(SUB, SPRITE);
+  allocator.listFreeBlocks(SUB, BG);
 }

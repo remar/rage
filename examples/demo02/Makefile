@@ -8,9 +8,11 @@ endif
 
 GAME_ICON	:=	$(PWD)/icon.bmp
 GAME_SUBTITLE1	:=	Remar's Abstract Graphics Engine
-GAME_SUBTITLE2	:=	Weeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+GAME_SUBTITLE2	:=	Clipped tiles
 
 include $(DEVKITARM)/ds_rules
+
+include $(PWD)/../ragefiles
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -72,7 +74,7 @@ export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp))) ../../../source/rage.cpp
+CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp))) $(RAGEFILES)
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 PNGFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))

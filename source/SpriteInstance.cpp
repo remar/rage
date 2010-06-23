@@ -81,10 +81,27 @@ SpriteInstance::animate()
 }
 
 void
+SpriteInstance::setVisible(bool visible)
+{
+  this->visible = visible;
+
+  setOAM();
+}
+
+void
 SpriteInstance::moveAbs(int x, int y)
 {
   this->x = x;
   this->y = y;
+
+  setOAM();
+}
+
+void
+SpriteInstance::moveRel(int x, int y)
+{
+  this->x += x;
+  this->y += y;
 
   setOAM();
 }

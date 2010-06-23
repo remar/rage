@@ -8,9 +8,11 @@ endif
 
 GAME_ICON	:=	$(PWD)/icon.bmp
 GAME_SUBTITLE1	:=	Remar's Abstract Graphics Engine
-GAME_SUBTITLE2	:=	Weeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+GAME_SUBTITLE2	:=	Basic sprite handling
 
 include $(DEVKITARM)/ds_rules
+
+include $(PWD)/../ragefiles
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -55,10 +57,6 @@ LIBS	:= 	-lnds9
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:=	$(LIBNDS)
-
-# TODO This will be replaced with a single -lrage later on
-RAGE := ../../../source
-RAGEFILES := $(RAGE)/rage.cpp $(RAGE)/SpriteInstance.cpp $(RAGE)/ImageCache.cpp
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

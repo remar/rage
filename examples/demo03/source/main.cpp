@@ -40,7 +40,7 @@ void loadGfx()
   TRY(rage.loadSprite(Rage::SUB, &cpngoodDef));
 }
 
-CaptainGood *cpnGood[2][12];
+CaptainGood *cpnGood[24];
 
 void init()
 {
@@ -63,12 +63,12 @@ void init()
   // Initialize the Captain Goods
   for(int i = 0;i < 12;i++)
     {
-      cpnGood[Rage::MAIN][i] = new CaptainGood(Rage::MAIN, &rage);
-      cpnGood[Rage::MAIN][i]->moveAbs(i>5?11*16-i*16:i*16, i*16);
+      cpnGood[i] = new CaptainGood(Rage::MAIN, &rage);
+      cpnGood[i]->moveAbs(i>5?11*16-i*16:i*16, i*16);
 
-      cpnGood[Rage::SUB][i] = new CaptainGood(Rage::SUB, &rage);
-      cpnGood[Rage::SUB][i]->moveAbs(240-(i>5?(11*16-i*16):i*16), i*16);
-      cpnGood[Rage::SUB][i]->setDirection(-1);
+      cpnGood[i+12] = new CaptainGood(Rage::SUB, &rage);
+      cpnGood[i+12]->moveAbs(240-(i>5?(11*16-i*16):i*16), i*16);
+      cpnGood[i+12]->setDirection(-1);
     }
 }
 
@@ -78,11 +78,8 @@ int main(void)
 
   while(1)
     {
-      for(int i = 0;i < 12;i++)
-	{
-	  cpnGood[Rage::MAIN][i]->update();
-	  cpnGood[Rage::SUB][i]->update();
-	}
+      for(int i = 0;i < 24;i++)
+	cpnGood[i]->update();
 
       rage.redraw();
     }

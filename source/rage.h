@@ -19,7 +19,7 @@ class Rage
   struct TileSetDefinition
   {
     int version;
-    int tileSetID;
+    int tileSetID; /* a unique tileset ID between 0 and 15 (inclusive) */
     ImageDefinition image;
   };
 
@@ -53,8 +53,8 @@ class Rage
 
   enum ErrorCode
     {
-      // Make sure that the char* array in getErrorString matches if
-      // you add a new error code.
+      // IMPLEMENTATION NOTE: Make sure that the char* array in
+      // getErrorString matches if you add a new error code.
       NO_ERROR,
       OUT_OF_VRAM,
       FAILED_LOAD_TILESET,
@@ -116,10 +116,11 @@ class Rage
   int moveSpriteRel(Screen s, int sprite, int dx, int dy);
 
   /* Memory info methods */
-  int getFreeMem(Screen s, Type t);
-  int getLargestFreeBlock(Screen s, Type t);
+  int getFreeMem(Screen s, Type t); /* returns amount of free bytes */
+  int getLargestFreeBlock(Screen s, Type t); /* block is measured in bytes */
   int getAvailableSprites(Screen s);
 
+  /* Debug methods */
   void listFreeBlocks();
 };
 
