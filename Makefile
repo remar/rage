@@ -6,11 +6,10 @@ ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
-GAME_ICON	:=	$(PWD)/icon.bmp
-GAME_SUBTITLE1	:=	Remar's Abstract Graphics Engine
-GAME_SUBTITLE2	:=	Background functions
-
 include $(DEVKITARM)/ds_rules
+
+# Hide the .a rule in $(DEVKITARM)/base_rules
+%.a:
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -37,7 +36,6 @@ CFLAGS	:=	-g -Wall -O2\
 		-ffast-math \
 		$(ARCH)
 
-#INCLUDE +=	-I../../../include # rage.h
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
@@ -47,14 +45,14 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project (order is important)
 #---------------------------------------------------------------------------------
-LIBS	:= 	-lrage -lnds9
+LIBS	:= 	-lnds9
 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) ../..
+LIBDIRS	:=	$(LIBNDS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -91,14 +89,11 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-					$(PNGFILES:.png=.o) \
-					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES	:=	$(CPPFILES:.cpp=.o)
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD)
-
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 icons := $(wildcard *.bmp)
@@ -111,18 +106,26 @@ else
 	endif
 endif
 
-.PHONY: $(BUILD) clean
+
+EXAMPLES = examples/demo01 examples/demo02 examples/demo03
+.PHONY: $(BUILD) clean doc install $(EXAMPLES)
 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
+librage.a: $(BUILD)
+
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds ../../source/*.o \
-	../../source/*.d
+	../../source/*.d $(CURDIR)/lib $(CURDIR)/include
+	@for dir in $(EXAMPLES); do \
+		(cd $$dir && make clean); \
+	done
+
 
 #---------------------------------------------------------------------------------
 else
@@ -130,8 +133,12 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(OUTPUT).nds	: 	$(OUTPUT).elf
-$(OUTPUT).elf	:	$(OFILES)
+librage.a:	$(OFILES)
+	$(AR) rvs $@ $(OFILES)
+	mkdir -p $(CURDIR)/../lib
+	mv $(CURDIR)/librage.a $(CURDIR)/../lib
+	mkdir -p $(CURDIR)/../include
+	cp $(CURDIR)/../source/rage.h ../include
 
 #---------------------------------------------------------------------------------
 %.bin.o	:	%.bin
@@ -154,3 +161,15 @@ $(OUTPUT).elf	:	$(OFILES)
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
+
+install: librage.a
+	@cp -v lib/librage.a $(DEVKITPRO)/libnds/lib
+	@cp -v include/rage.h $(DEVKITPRO)/libnds/include
+
+doc:
+	doxygen doc/api/Doxyfile
+
+examples: $(EXAMPLES)
+
+$(EXAMPLES):
+	(cd $@ && $(MAKE))
