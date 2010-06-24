@@ -1,0 +1,18 @@
+#!/bin/sh
+
+echo ------------------------------------------------------------
+echo Making source distribution of Rage
+echo ------------------------------------------------------------
+
+VERSION=1
+
+RAGE=rage-src-$VERSION
+
+make clean
+mkdir -p $RAGE
+cp -r doc source examples Makefile $RAGE
+cp README.srcdist $RAGE/README
+tar cjvf $RAGE.tar.bz2 $RAGE
+rm -rf $RAGE
+mkdir -p ../releases
+mv $RAGE.tar.bz2 ../releases

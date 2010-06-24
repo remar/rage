@@ -1,0 +1,29 @@
+#!/bin/sh
+
+echo ------------------------------------------------------------
+echo Making binary distribution of Rage
+echo ------------------------------------------------------------
+
+VERSION=1
+
+RAGE=rage-$VERSION
+
+# Make sure examples are cleaned
+make clean
+
+make
+
+make doc
+rm -rf doc/api/latex
+mv doc/api/html/* doc/api
+rmdir doc/api/html
+
+mkdir -p $RAGE
+cp -r include lib examples doc $RAGE
+rm $RAGE/doc/api/Doxyfile
+cp Makefile.bindist $RAGE/Makefile
+cp README.bindist $RAGE/README
+tar cjvf $RAGE.tar.bz2 $RAGE
+rm -rf $RAGE
+mkdir -p ../releases
+mv $RAGE.tar.bz2 ../releases

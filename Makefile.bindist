@@ -1,0 +1,7 @@
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitPro")
+endif
+
+install:
+	@cp -v lib/librage.a $(DEVKITPRO)/libnds/lib
+	@cp -v include/rage.h $(DEVKITPRO)/libnds/include
