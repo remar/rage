@@ -37,7 +37,7 @@ CFLAGS	:=	-g -Wall -O2\
 		-ffast-math \
 		$(ARCH)
 
-#INCLUDE +=	-I../../../include # rage.h
+INCLUDE +=	-I../../../include # rage.h
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
@@ -54,7 +54,7 @@ LIBS	:= 	-lrage -lnds9
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) ../..
+LIBDIRS	:=	$(LIBNDS) ../../..
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
