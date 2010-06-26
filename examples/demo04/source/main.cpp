@@ -4,9 +4,6 @@
   A simplified sprite demo without the class abstraction found in demo 03.
  */
 
-#include <nds.h>
-#include <stdio.h>
-
 #include "rage.h"
 
 Rage rage;
@@ -23,7 +20,7 @@ int main(void)
 
   u16 map[16*12];
   for(int i = 0;i < 16*12;i++)
-    map[i] = rand()%4;
+    map[i] = i/16==5?0:(i/16==6?rand()%3+1:rand()%4);
 
   rage.setMap(Rage::MAIN, 0, METROID_TILESET, map);
 
@@ -36,15 +33,16 @@ int main(void)
   rage.selectAnimation(Rage::MAIN, good, WALK_RIGHT);
 
   int x = -16;
-  rage.moveSpriteAbs(Rage::MAIN, good, x, (192-16)/2);
+  rage.moveSpriteAbs(Rage::MAIN, good, x, 5*16);
 
   while(1)
     {
       rage.moveSpriteRel(Rage::MAIN, good, 1, 0);
-      if(++x > 256)
+
+      if(++x > 255)
 	{
 	  x = -16;
-	  rage.moveSpriteAbs(Rage::MAIN, good, x, (192-16)/2);
+	  rage.moveSpriteAbs(Rage::MAIN, good, x, 5*16);
 	}
 
       rage.redraw();

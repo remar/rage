@@ -125,7 +125,7 @@ clean:
 	@for dir in $(EXAMPLES); do \
 		(cd $$dir && make clean); \
 	done
-
+	(cd doc/api && rm -rf *.html *.css *.gif *.png html latex)
 
 #---------------------------------------------------------------------------------
 else

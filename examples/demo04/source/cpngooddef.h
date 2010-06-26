@@ -5,7 +5,7 @@
   animations that are interesting as they consist of more than 1 frame.
 
   Note that spriteID is set to a #defined constant, and this constant
-  is used in the implementation of class CaptainGood as well.
+  is used in main.cpp as well.
 */
 
 #include "goodleft.h"
