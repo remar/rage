@@ -8,10 +8,13 @@ VERSION=1
 
 RAGE=rage-src-$VERSION
 
+# Generate README file
+(cd README-files/ && m4 README.srcdist) > README
+
 make clean
 mkdir -p $RAGE
-cp -r doc source examples Makefile $RAGE
-cp README.srcdist $RAGE/README
+cp -r doc source examples Makefile README $RAGE
+rm README
 tar cjvf $RAGE.tar.bz2 $RAGE
 rm -rf $RAGE
 mkdir -p ../releases

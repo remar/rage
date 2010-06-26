@@ -1,0 +1,29 @@
+_______________________________________________________________________________
+
+            Rage - Remar's Abstract Graphics Engine for Nintendo DS           
+
+	    Version 1 - source distribution
+_______________________________________________________________________________
+
+include(`introduction')
+
+include(`license')
+
+ . Compilation
+
+   To compile Rage simply call 'make'. If you want to compile the
+   examples you call 'make examples'.
+
+
+include(`installation')
+
+include(`using')
+
+ . Documentation
+
+   To generate the API documentation, call 'make doc'. You need
+   doxygen to generate the documentation. When it is done, the API
+   documentation will be placed in doc/api/html.
+
+
+include(`contacting')

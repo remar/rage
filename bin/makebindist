@@ -18,11 +18,14 @@ rm -rf doc/api/latex
 mv doc/api/html/* doc/api
 rmdir doc/api/html
 
+# Generate README file
+(cd README-files/ && m4 README.bindist) > README
+
 mkdir -p $RAGE
-cp -r include lib examples doc $RAGE
+cp -r include lib examples doc README $RAGE
+rm README
 rm $RAGE/doc/api/Doxyfile
 cp Makefile.bindist $RAGE/Makefile
-cp README.bindist $RAGE/README
 tar cjvf $RAGE.tar.bz2 $RAGE
 rm -rf $RAGE
 mkdir -p ../releases

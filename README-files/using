@@ -1,0 +1,25 @@
+ . Using Rage
+
+   This is a minimalist source file that uses Rage. See the API
+   documentation and examples to learn about the different methods,
+   tileset definition, and sprite definition. Make sure that your
+   source files are named .cpp as Rage is implemented in C++ and can
+   only be linked into C++ projects. You don't have to use any other
+   functionality of C++ than what Rage uses if you don't want to.
+
+   #include "rage.h"
+
+   int main()
+   {
+     Rage rage;
+
+     rage.init();
+
+     return 0;
+   }
+
+   To link with Rage you need to add -lrage to the LIBS line in the
+   Makefile. This variable will by default list -lnds9, include -lrage
+   before -lnds9. The LIBS line will then look like this:
+
+   LIBS   := 	  -lrage -lnds9

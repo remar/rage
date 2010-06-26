@@ -1,0 +1,10 @@
+ . Introduction
+
+   Rage is a graphics library for the Nintendo DS with a C++
+   interface. It provides an abstraction for backgrounds with varying
+   tile dimensions, and animating sprites. A general design
+   consideration has been ease of use, so hopefully that has been
+   accomplished. A gentle introduction to Rage is available on the
+   Rage website: <http://remar.se/andreas/rage/tutorial.php>.
+
+   Happy hacking!

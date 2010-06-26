@@ -1,0 +1,21 @@
+_______________________________________________________________________________
+
+            Rage - Remar's Abstract Graphics Engine for Nintendo DS           
+
+	    Version 1 - binary distribution
+_______________________________________________________________________________
+
+include(`introduction')
+
+include(`license')
+
+include(`installation')
+
+include(`using')
+
+ . Documentation
+
+   The API documentation can be found in doc/api/.
+
+
+include(`contacting')

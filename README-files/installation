@@ -1,0 +1,12 @@
+ . Installation
+
+   To install Rage, call 'make install'. When installing Rage, it will
+   be placed in the libnds package alongside the other include and lib
+   files. So librage.a will be placed in $DEVKITPRO/libnds/lib and
+   rage.h will be placed in $DEVKITPRO/libnds/include. $DEVKITPRO must
+   be set to your devkitPro installation, but the Makefile will check
+   that it is. Make sure that you have permission to write to your
+   devkitPro installation.
+
+   An alternative to installing Rage in libnds is to add the path to
+   the Rage directory to the LIBDIRS line in the Makefile.
