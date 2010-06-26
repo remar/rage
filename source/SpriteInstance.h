@@ -60,7 +60,9 @@ class SpriteInstance
   u16 timeSpentInFrame;
   bool stopAnimation;
 
-  u16 currentFrameIndex;
+  int currentFrameIndex;
+
+  bool emptyFrame; /* Current frame is empty, hide sprite */
 };
 
 #endif

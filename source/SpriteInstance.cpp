@@ -29,7 +29,7 @@ SpriteInstance::SpriteInstance(SpriteDefinitionInternal *spriteDef,
 			       ImageCache *imageCache, Rage::Screen screen,
 			       int spriteIndex)
   : x(0), y(0), spriteDefinition(spriteDef), imageCache(imageCache),
-    screen(screen), spriteIndex(spriteIndex), visible(true)
+    screen(screen), spriteIndex(spriteIndex), visible(true), emptyFrame(false)
 {
   setInitialAnimation();
 }
@@ -81,6 +81,12 @@ SpriteInstance::animate()
   timeSpentInFrame++;
   if(timeSpentInFrame >= currAnim->frames[currentFrame].duration)
     {
+      if(emptyFrame == true)
+	{
+	  /* If previous frame was empty, show sprite again */
+	  emptyFrame = false;
+	}
+
       currentFrame++;
 
       if(currentFrame >= currAnim->frameCount)
@@ -92,6 +98,15 @@ SpriteInstance::animate()
 	}
 
       currentFrameIndex = currAnim->frames[currentFrame].index;
+
+      if(currentFrameIndex == -1)
+	{
+	  /* Hide sprite during the frames duration */
+	  emptyFrame = true;
+
+	  /* Show a valid frame, but hide it */
+	  currentFrameIndex = 0;
+	}
 
       timeSpentInFrame = 0;
 
@@ -157,5 +172,6 @@ SpriteInstance::setOAM()
 
       oamSet(oam, spriteIndex, x, y, 0, 0, currAnim->size,
 	     SpriteColorFormat_256Color, animationFrames[currentFrameIndex],
-	     -1, false, !visible /* hide */, false, false, false);
+	     -1, false, !visible || emptyFrame /* hide */,
+	     false, false, false);
 }
