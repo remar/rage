@@ -39,11 +39,14 @@ SpriteInstance::setAnimation(u16 animationID)
 {
   if(animationID >= spriteDefinition->animationCount)
     {
-      return 0;
+      return -1;
     }
 
   if(animationID != currentAnimation)
     {
+      // TODO Do something smart here to avoid uploading the image
+      // again if we switch from an image to the same image
+
       // Unload previous animation graphics from VRAM
       imageCache->unload(screen, &spriteDefinition->animations[currentAnimation].image);
 

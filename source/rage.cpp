@@ -625,7 +625,21 @@ Rage::selectAnimation(Screen s, int sprite, int animation)
 
   int index = SPRITE_INDEX(sprite);
 
-  spriteInstances[s][index].instance->setAnimation(animation);
+  int code;
+  if((code = spriteInstances[s][index].instance->setAnimation(animation)) != 1)
+    {
+      switch(code)
+	{
+	case 0:
+	  errorCode = OUT_OF_VRAM;
+	  break;
+
+	case -1:
+	  errorCode = BAD_ANIMATION_ID;
+	  break;
+	}
+      return 0;
+    }
 
   return 1;
 }
@@ -714,6 +728,7 @@ Rage::getErrorString()
       "Bad sprite dimension",
       "Bad sprite instance",
       "No such sprite loaded",
+      "Bad animation ID",
     };
 
   if(errorCode < NO_ERROR || errorCode >= LAST_ERROR_CODE)
