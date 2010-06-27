@@ -4,10 +4,9 @@
   The first introductory demo of Remar's Abstract Graphics Engine.
 */
 
-#include <nds.h>
-#include <stdio.h>
-
 #include "rage.h"
+#include <stdio.h>
+#include <time.h>
 
 Rage rage;
 
@@ -24,6 +23,7 @@ void displayError()
 
 int main(void)
 {
+  srand(time(0));
 
   TRY(rage.init()); // setup default VRAM mappings and screen modes
 

@@ -5,11 +5,14 @@
  */
 
 #include "rage.h"
+#include <time.h>
 
 Rage rage;
 
 int main(void)
 {
+  srand(time(0));
+
   rage.init();
 
   rage.setupBackground(Rage::MAIN, 0, 16, 16);
