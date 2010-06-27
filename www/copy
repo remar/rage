@@ -1,3 +1,13 @@
 #!/bin/sh
 
-cp -r gfx *.php *.html *.css ~/public_html/rage
+mkdir -p ~/public_html/rage
+cp -r gfx *.php *.html *.css *.txt ~/public_html/rage
+
+[ -d ../doc/api/html ] || (cd .. && make doc)
+cp -r ../doc/api/html ~/public_html/rage/api
+
+[ -f ../doc/specification/funcspec1.txt ] && \
+    cp -r ../doc/specification/funcspec1.txt ~/public_html/rage
+
+mkdir -p ~/public_html/rage/files
+cp ../../releases/* ~/public_html/rage/files
