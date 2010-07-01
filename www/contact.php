@@ -7,7 +7,7 @@
 
 <?php include('menu.html'); ?>
 
-<p>You can contact the author of Rage at andreas.remar@gmail.com</p>
+<p>You can contact the author of Rage at <b>andreas.remar@gmail.com</b></p>
 
 </body>
 </html>

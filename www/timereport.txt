@@ -1,8 +1,8 @@
 | L | Headline                                                     | Time    |       |
 |---+--------------------------------------------------------------+---------+-------|
-|   | *Total time*                                                 | *52:03* |       |
+|   | *Total time*                                                 | *58:34* |       |
 |---+--------------------------------------------------------------+---------+-------|
-| 1 | Plan (Rage 1)                                                | 52:03   |       |
+| 1 | Plan (Rage 1)                                                | 58:34   |       |
 | 2 | DONE Write plan                                              |         |  0:20 |
 | 2 | DONE Gather documentation about the Nintendo DS              |         |  0:41 |
 | 2 | DONE Read documentation about graphics handling              |         | 13:13 |
@@ -13,8 +13,9 @@
 | 2 | DONE Figure out how to compile C++ projects against libnds   |         |  0:11 |
 | 2 | DONE Make new time estimate for implementing the engine      |         |  0:22 |
 | 2 | DONE Implement first version of graphics engine              |         | 14:47 |
-| 2 | DONE Update functional specification to match implementation |         |  0:51 |
+| 2 | DONE Update functional specification to match implementation |         |  0:55 |
 | 2 | DONE Make a library of Rage (librage.a)                      |         |  1:30 |
 | 2 | DONE Document graphics engine (doxygen comments)             |         |  4:14 |
-| 2 | DONE Write README file                                       |         |  0:46 |
-| 2 | TODO Make website for publishing work                        |         |  0:47 |
+| 2 | DONE Write README file                                       |         |  0:52 |
+| 2 | DONE Make website for publishing work                        |         |  1:57 |
+| 2 | DONE Write tutorial                                          |         |  5:11 |
