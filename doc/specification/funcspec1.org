@@ -302,33 +302,23 @@
 
      This method will wait for vertical retrace (vblank), locking the
      frame rate to ~60 fps.
-**** int selectOnTop(Engine engine)
-     Selects what engine to display on the top screen, the other
-     engine will be displayed on the bottom screen.
-**** int setupBackground(Engine engine, int layer, int tileWidth, int tileHeight)
+**** int selectOnTop(Screen screen)
+     Selects what screen to display on the top display, the other
+     screen will be displayed on the bottom display.
+**** int setupBackground(Screen screen, int layer, int tileWidth, int tileHeight)
      Layer is either 0, 1, 2, or 3. 0 is in front, 3 is in back. Tile
      width and tile height must be divisible by 8.
-**** int loadTileSet(Engine engine, TileSetDefinition *def)
+**** int loadTileSet(Screen screen, TileSetDefinition *def)
      Loads in the graphics for the tileset in VRAM.
 
      Return 0 on error, otherwise 1. You can currently load a maximum
      of 16 tilesets per screen, and the tileset ID should be between 0
      and 15. Use the tileset ID when methods below asks for a tileSet.
-***** Technical note
-      The graphics engine will need to keep track of free blocks of
-      VRAM. The easiest method will probably be an array of bytes that
-      indicates if a 8*8 block (64 bytes) has been allocated. In that
-      case, the allocator for background VRAM will have to keep track
-      of 1792 blocks and for sprite VRAM 2048 blocks. This could also
-      be packed into bytes as bit values so that the 1792 blocks could
-      be represented by 224 bytes and the 2048 blocks could be
-      represented by 256 bytes. This will be a balance between size
-      and speed, so the exact method will appear later on.
-**** int unloadTileSet(Engine engine, u16 tileSet)
+**** int unloadTileSet(Screen screen, u16 tileSet)
      Remove tileset graphics from VRAM.
-**** int setTile(Engine engine, int layer, int x, int y, u16 tileSet, u16 tile)
+**** int setTile(Screen screen, int layer, int x, int y, u16 tileSet, u16 tile)
      Sets a tile in the abstract tilemap.
-**** int setMap(Engine engine, int layer, Tile *map)
+**** int setMap(Screen screen, int layer, Tile *map)
      Provide a tilemap with the correct dimensions. The dimensions
      of the map depends on the size of the abstract tiles. E.g. if
      the tiles are 16*16 pixels, then you should provide a map that
@@ -341,17 +331,17 @@
      must also be provided. E.g. if you use 24*24 pixel tiles, the
      rightmost tiles will only show 2/3rds. You must still provide
      these tiles, so the tilemap will be 11*8.
-**** int setMap(Engine engine, int layer, u16 tileSet, u16 *map)
+**** int setMap(Screen screen, int layer, u16 tileSet, u16 *map)
      As above, but with the same tileset for all the tiles.
-**** int loadSprite(Engine engine, SpriteDefinition *def)
+**** int loadSprite(Screen screen, SpriteDefinition *def)
      Loads a sprite as defined by the SpriteDefinition into Rage.
 
      This function does not actually load any graphics into VRAM,
      that happens when an animation is started for this sprite.
-**** int unloadSprite(Engine engine, int sprite)
+**** int unloadSprite(Screen screen, int sprite)
      Unloads sprite from abstract sprite engine. Make sure that all
      instances of this sprite has been removed.
-**** int createSpriteInstance(Engine engine, int sprite)
+**** int createSpriteInstance(Screen screen, int sprite)
      Creates an instance of the provided sprite. The sprite will
      start the first animation defined, be visible, and displayed at
      0,0.
@@ -359,25 +349,25 @@
      Returns the index to use when controlling this sprite instance
      in the functions below (showSprite, moveSpriteAbs,
      moveSpriteRel, etc.). On error, 0 is returned.
-**** int removeSpriteInstance(Engine engine, int sprite)
+**** int removeSpriteInstance(Screen screen, int sprite)
      Removes the sprite instance.
-**** int selectAnimation(Engine engine, int sprite, int animation)
+**** int selectAnimation(Screen screen, int sprite, int animation)
      Select which animation to play for the sprite instance.
-**** int showSprite(Engine engine, int sprite, bool show)
+**** int showSprite(Screen screen, int sprite, bool show)
      Decide if you should show or hide the sprite.
-**** int moveSpriteAbs(Engine engine, int sprite, int x, int y)
+**** int moveSpriteAbs(Screen screen, int sprite, int x, int y)
      Move sprite to an absolute coordinate.
-**** int moveSpriteRel(Engine engine, int sprite, int dx, int dy)
+**** int moveSpriteRel(Screen screen, int sprite, int dx, int dy)
      Move sprite relative to current position.
-**** int getFreeMem(Engine engine, Type type /* BG or SPRITE */)
+**** int getFreeMem(Screen screen, Type type /* BG or SPRITE */)
      Returns how many bytes of graphics memory is left for either
      background graphics or sprite graphics.
-**** int getLargestFreeBlock(Engine engine, int type)
+**** int getLargestFreeBlock(Screen screen, int type)
      Returns largest free block of memory for either background
      graphics or sprite graphics. If fragmentation is an issue, this
      might be more appropriate than getFreeMem. The return value is
      how many bytes is available in the largest block.
-**** int getAvailableSprites(Engine engine)
+**** int getAvailableSprites(Screen screen)
      Returns how many more sprites can be created in the hardware
      engine.
 **** void listFreeBlocks()
