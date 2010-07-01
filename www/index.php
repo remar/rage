@@ -21,11 +21,11 @@ please see <a href="about.php">About Rage</a>.
 <tr><td class="heading"><b> 2010-07-01 </b></td></tr>
 <tr><td>
 
-Rage is released to the world! After almost a month of work, here is
-finally the first version of this C++ graphics library for Nintendo
-DS. See the <a href="tutorial.php">tutorial</a> to learn how to use it, or
-see the <a href="about.php">about page</a> to read about the features
-and future of Rage.
+Rage is released to the world! After a month of work, here is finally
+the first version of this C++ graphics library for Nintendo DS. See
+the <a href="tutorial.php">tutorial</a> to learn how to use it, or see
+the <a href="about.php">about page</a> to read about the features and
+future of Rage.
 
 <br/><br/></td></tr>
 
