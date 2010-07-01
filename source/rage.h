@@ -289,7 +289,8 @@ class Rage
     int version;
 
     /** Unique sprite ID that should be provided to the
-	createSpriteInstance and unloadSprite methods. */
+	createSpriteInstance and unloadSprite methods. The spriteID
+	must be between 0 and 127 (inclusive). */
     u16 spriteID;
     
     /** Number of animations in sprite. */
@@ -350,10 +351,11 @@ class Rage
 
   /* -------------------- General methods -------------------- */
 
-  /** Default constructor that resets values. */
+  /** Default constructor that sets up some of Rage's internal
+      structures. */
   Rage();
 
-  /** Sets up the two screens and initializes the oam structs.
+  /** Sets up the two screens and initializes the OAM structs.
 
       @return 0 on failure, 1 on success. */
   int init();
@@ -397,7 +399,7 @@ class Rage
 
   /** Load a tileset into VRAM.
       
-      @param s Screen to set load tile set into, Rage::MAIN or
+      @param s Screen to load tile set into, Rage::MAIN or
       Rage::SUB.
 
       @param def A valid tile set definition.
@@ -422,7 +424,7 @@ class Rage
       @return 0 on failure, 1 on success. */
   int unloadAllTileSets(Screen s);
 
-  /** Set a tile in the abstract tilemap. 
+  /** Set a tile in the abstract tilemap.
 
       @param s Screen to set tile on, Rage::MAIN or Rage::SUB. 
 
@@ -463,8 +465,8 @@ class Rage
       an array of Tile, but this variant sets all the tiles using the
       same tileset.
 
-      @see setMap for a discussion on the correct dimension for the
-      tilemap. 
+      @see setMap for a discussion on the correct dimensions for the
+      tilemap.
 
       @param s Screen to set map on, Rage::MAIN or Rage::SUB.
 
@@ -472,7 +474,7 @@ class Rage
 
       @param tileSet Tile set ID of a loaded tile set.
 
-      @param map Array of type u16 of the correct dimensions. 
+      @param map Array of type u16 of the correct dimensions.
 
       @return 0 on failure, 1 on success. */
   int setMap(Screen s, u16 layer, u16 tileSet, u16 *map);
@@ -553,9 +555,9 @@ class Rage
 
       @param sprite Sprite handle returned from Rage::createSpriteInstance.
 
-      @param x X coordinate of sprite instance.
+      @param x New X coordinate of sprite instance.
 
-      @param y Y coordinate of sprite instance.
+      @param y New Y coordinate of sprite instance.
 
       @return 0 on failure, 1 on success. */
   int moveSpriteAbs(Screen s, int sprite, int x, int y);
