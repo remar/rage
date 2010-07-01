@@ -16,6 +16,7 @@ mkdir -p $RAGE
 cp -r doc source examples Makefile README $RAGE
 rm README
 tar cjvf $RAGE.tar.bz2 $RAGE
+zip -r $RAGE $RAGE
 rm -rf $RAGE
 mkdir -p ../releases
-mv $RAGE.tar.bz2 ../releases
+mv $RAGE.tar.bz2 $RAGE.zip ../releases
