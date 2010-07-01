@@ -7,7 +7,8 @@
 
 <?php include('menu.html'); ?>
 
-<p>Download binary and source distributions of Rage!</p>
+<p>Here you can find both binary and source distributions of
+Rage. Take your pick!</p>
 
 <table>
 

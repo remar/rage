@@ -7,11 +7,14 @@
 
 <?php include('menu.html'); ?>
 
-<ul>
-<li><a href="api">Rage API documentation</a></li>
-<li><a href="funcspec1.php">Functional specification - Rage version 1</a></li>
-<li><a href="timereport.php">Time report</a></li>
-</ul>
+<p>
+I'm keeping track of the time I spend while working on Rage, here's
+the current (as of 2010-06-30) summary:
+</p>
+
+<pre>
+<?php include('timereport.txt'); ?>
+</pre>
 
 </body>
 </html>
