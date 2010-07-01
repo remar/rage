@@ -8,6 +8,9 @@ _______________________________________________________________________________
 include(`introduction')
 
 include(`license')
+   To get the source of Rage, visit the official site at:
+   <http://remar.se/andreas/rage>
+
 
 include(`installation')
 
