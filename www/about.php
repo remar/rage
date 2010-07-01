@@ -11,7 +11,7 @@
 
 <p>Rage is an abstraction of the Nintendo DS graphics implemented in
 C++. It is currently quite limited, but it is intentional, to simplify
-the first implementation.</p>
+the implementation of the first version.</p>
 
 <h2>Features</h2>
 

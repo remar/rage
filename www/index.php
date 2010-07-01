@@ -16,9 +16,9 @@ please see <a href="about.php">About Rage</a>.
 
 </p>
 
-<table>
+<table class="indent">
 
-<tr><td class="heading"><b> 2010-06-26 </b></td></tr>
+<tr><td class="heading"><b> 2010-07-01 </b></td></tr>
 <tr><td>
 
 Rage is released to the world! After almost a month of work, here is

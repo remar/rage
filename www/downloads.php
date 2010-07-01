@@ -10,7 +10,7 @@
 <p>Here you can find both binary and source distributions of
 Rage. Take your pick!</p>
 
-<table class="download">
+<table class="indent">
 
 <tr><td class="heading"><b> Rage version 1 </b></td><td></td><tr>
 

@@ -3,5 +3,5 @@ a {text-decoration: none; color: green}
 li {margin-top:10px;}
 img {border:0px;}
 td.heading {border: solid thin #000000; margin-top: 20px;}
-table.download {margin-left:50px;margin-right:50px;}
+table.indent {margin-left:50px;margin-right:50px;}
 .code {background-color: #c0c0c0}
