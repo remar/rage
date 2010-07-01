@@ -28,7 +28,8 @@
 
    This is the API documentation for Rage - Remar's Abstract Graphics
    Engine for Nintendo DS, version 1. See rage.h for a listing of the
-   main include file.
+   main include file, and Rage for a listing of the Rage class with
+   all the methods and the structs.
 
 
    \section init Initialization
