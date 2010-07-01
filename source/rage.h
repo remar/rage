@@ -176,7 +176,7 @@
    To get the amount of free VRAM, in bytes, use Rage::getFreeMem. You
    can get information about either sprite VRAM or background VRAM.
 
-   If fragmentation is an issue in you program you can use
+   If fragmentation is an issue in your program you can use
    Rage::getLargestFreeBlock to get the largest block, in bytes, of
    consecutive free VRAM. This is an indication of how big tileset or
    animation you currently can load in.
