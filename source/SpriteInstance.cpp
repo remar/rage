@@ -42,24 +42,24 @@ SpriteInstance::setAnimation(u16 animationID)
       return -1;
     }
 
-  if(animationID != currentAnimation)
+  // Check if we need to switch graphics
+  if(animationID != currentAnimation
+     && (spriteDefinition->animations[animationID].image.gfx
+	 != spriteDefinition->animations[currentAnimation].image.gfx))
     {
-      // TODO Do something smart here to avoid uploading the image
-      // again if we switch from an image to the same image
-
       // Unload previous animation graphics from VRAM
       imageCache->unload(screen, &spriteDefinition->animations[currentAnimation].image);
-
+      
       Rage::Animation *a = &spriteDefinition->animations[animationID];
-
+      
       // Load in graphics in animation into VRAM
       animationFrames = imageCache->get(screen, &a->image, a->size);
-    }
-
-  if(animationFrames == 0)
-    {
-      // Out of VRAM
-      return 0;
+      
+      if(animationFrames == 0)
+	{
+	  // Out of VRAM
+	  return 0;
+	}
     }
 
   // Set up animation values
