@@ -27,9 +27,9 @@ files to having a working .nds ready for testing. Have fun!
 <p>
 I will assume that you've already installed devkitARM and libnds, and
 that you're able to compile the examples. If that's not the case, you
-can have a look at Drunken Coders <a
-href="http://drunkencoders.com">introduction</a> to get you started on
-that.
+can have a look at this <a
+href="http://wiki.devkitpro.org/index.php/Getting_Started">devkitPro
+page</a> to get you started.
 </p>
 
 <p>
@@ -41,9 +41,9 @@ these are:
 </p>
 
 <ul>
-<li>Bjarne Stroustrup - The C++ Programming Language (recommended book)</li>
-<li>Some tutorial page on the net.</li>
-<li>Some other tutorial page on the net.</li>
+<li>Bjarne Stroustrup - The C++ Programming Language (highly recommended book)</li>
+<li><a href="http://beej.us/guide/bgc/">Beej's Guide to C Programming</a></li>
+<li><a href="http://cplusplus.com/doc/tutorial/">C++ Language Tutorial</a> at cplusplus.com</li>
 </ul>
 
 <h2>Authors angle</h2>
@@ -66,7 +66,8 @@ href="contact.php">contact</a> me, I might actually fix it.
 <p>Installing Rage should be pretty simple, follow these easy steps:</p>
 
 <ul>
-<li>Download <a href="files/rage-1.tar.bz2">rage-1.tar.bz2</a> from this site</li>
+<li>Download <a href="files/rage-1.tar.bz2">rage-1.tar.bz2</a> or <a
+href="files/rage-1.zip">rage-1.zip</a> from this site</li>
 <li>Unpack somewhere</li>
 <li>Open up a shell, go into the rage-1 directory, and type 'make install'</li>
 </ul>
@@ -371,7 +372,7 @@ rage.loadTileSet(Rage::MAIN, &metroidDef);
 
 <p>I know, you might be thinking 'WTF? You shouldn't have include
 files in your functions!', and I agree... but this is how I'm doing it
-right now, OK? If and when I learn about some file system on the DS,
+right now, OK? If and when I learn how to use a file system on the DS,
 I'll create a nice file format for tile set definitions.</p>
 
 <p>Another thing to note is that the palette for the background will
@@ -715,12 +716,6 @@ int x = 0;
 int dx = 1;
 </pre></div>
 
-<p>Now let's move the sprite instance to the starting position:</p>
-
-<div class="code"><pre>
-rage.moveSpriteAbs(Rage::MAIN, good, x, 5*16);
-</pre></div>
-
 <p>Next we'll add some code to move Captain Good one pixel each
 frame. He'll move in the direction of dx, simply by adding dx to
 x. Each frame we also check if we've reached the edge of the screen,
@@ -759,7 +754,7 @@ and cpngooddef.h files for completeness:</p>
 
 <p><b>main.cpp</b></p>
 <div class="code"><pre>
-#include <nds.h>
+#include &lt;nds.h&gt;
 #include "rage.h"
 
 Rage rage;
@@ -774,7 +769,7 @@ int main(void)
 
   u16 map[16*12];
 
-  for(int i = 0;i < 16*12;i++)
+  for(int i = 0;i &lt; 16*12;i++)
     {
       if(i/16 == 5)
 	map[i] = 0;
@@ -795,8 +790,6 @@ int main(void)
 
   int x = 0;
   int dx = 1;
-
-  rage.moveSpriteAbs(Rage::MAIN, good, x, 5*16);
 
   while(1)
     {
