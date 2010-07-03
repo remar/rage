@@ -1,0 +1,89 @@
+* Rage - Remar's Abstract Graphics Engine for Nintendo DS
+** Introduction
+   Rage is a graphics engine for the Nintendo DS with a C++
+   interface. It is licensed with the LGPL.
+
+   If you're reading this, then you're looking at the git repository
+   for main Rage development. If you're only interested in using Rage
+   to develop NDS applications, or want to learn about Rage, please
+   visit the official Rage site at <http://remar.se/andreas/rage>
+   instead.
+** License
+   Rage is licensed with the Lesser General Public License. In short,
+   this license allows you to link against Rage without making your
+   source free. If you modify Rage, you must provide the source for
+   the modified Rage version.
+
+   The license can be found in the files doc/license/COPYING and
+   doc/license/COPYING.LESSER.
+
+   For more on the LGPL, see <http://gnu.org/licenses/lgpl.html>.
+** Getting the source
+   If you're new to git (the version control system Rage uses) you can
+   find an excellent book at <http://progit.org/book>. You don't
+   really have to learn alot of git commands to just fetch the source,
+   but if you want to contribute you should learn a little about how
+   to use git.
+
+   Anyway, to fetch the sources once you have git installed, you use
+   this simple command:
+
+   git clone git://github.com/remar/rage.git
+
+   That should create a 'rage' directory in your current dir.
+** File tree
+   This repository contains everything that's related to Rage, from
+   the C++ source to the website. Here's a short rundown of the file
+   structure.
+*** Root
+    Contains the main Makefile and also the Makefile.bindist that is
+    included when a binary distribution is built.
+*** README-files
+    The files that are used to generate the README files for the
+    binary and source distributions. The README files are generated
+    with m4.
+*** bin
+    Simple scripts to create the binary and source
+    distributions. Quite straight forward.
+*** doc
+    The various documentation for Rage.
+**** api
+     Contains the Doxyfile that doxygen uses to extract the API
+     documentation from rage.h. (The generated API documentation will
+     be placed in this directory).
+**** license
+     The files for the license (LGPL) are located here, COPYING and
+     COPYING.LESSER.
+**** specification
+     The functional specification for Rage version 1.
+*** examples
+    Contains the 4 example projects.
+*** source
+    The most important directory! Contains the source for Rage.
+*** www
+    The website for Rage. Uses a little php.
+** Make targets
+   The main Makefile has a couple of useful targets that you can use.
+*** librage.a
+    The default target, if you don't provide a target when calling
+    'make', this is what will be built. Creates the directories lib/
+    and include/ as well, and moves librage.a to lib/ and rage.h to
+    include/.
+*** clean
+    Clean up everything, including generated documentation.
+*** install
+    Moves librage.a to $DEVKITPRO/libnds/lib and rage.h to
+    $DEVKITPRO/libnds/include.
+*** doc
+    Generates the API documentation with doxygen.
+*** examples
+    Recursively compiles the examples.
+** Making a release
+   To make a release, simply cd to the root of rage, and issue the
+   commands bin/makesrcdist and bin/makebindist. This will create
+   .tar.bz2 and .zip files and place them in ../releases/.
+** What's with all the ******* stars?
+   Well, this is an org-mode file. You can learn about org-mode at
+   <http://orgmode.org>. Basically, it's an outline mode++ for Emacs.
+   (If you're reading this at github.com, this section might not make
+   alot of sense.)
