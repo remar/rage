@@ -57,7 +57,7 @@ following features, but many will be included in later versions.</p>
 
 <h2>Licensing</h2>
 
-<p>Rage is licensed with the <a
+<p>Rage is licensed under the <a
 href="http://gnu.org/licenses/lgpl.html">Lesser General Public
 License</a>, LGPL. In short, this license allows you to link against
 Rage without making your source free. If you modify Rage, you must

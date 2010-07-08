@@ -1,7 +1,7 @@
 * Rage - Remar's Abstract Graphics Engine for Nintendo DS
 ** Introduction
    Rage is a graphics engine for the Nintendo DS with a C++
-   interface. It is licensed with the LGPL.
+   interface. It is licensed under the LGPL.
 
    If you're reading this, then you're looking at the git repository
    for main Rage development. If you're only interested in using Rage
@@ -9,7 +9,7 @@
    visit the official Rage site at <http://remar.se/andreas/rage>
    instead.
 ** License
-   Rage is licensed with the Lesser General Public License. In short,
+   Rage is licensed under the Lesser General Public License. In short,
    this license allows you to link against Rage without making your
    source free. If you modify Rage, you must provide the source for
    the modified Rage version.
