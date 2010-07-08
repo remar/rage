@@ -23,7 +23,6 @@
 
 #include "rage.h"
 #include "SpriteInstance.h"
-#include <stdio.h>
 
 SpriteInstance::SpriteInstance(SpriteDefinitionInternal *spriteDef,
 			       ImageCache *imageCache, Rage::Screen screen,
@@ -72,6 +71,8 @@ SpriteInstance::setAnimation(u16 animationID)
 
   stopAnimation = false;
 
+  setOAM();
+
   return 1;
 }
 
@@ -97,7 +98,13 @@ SpriteInstance::animate()
 	  if(currAnim->looping)
 	    currentFrame = 0;
 	  else
-	    stopAnimation = true; // reached end of non-looping animation
+            {
+              stopAnimation = true; // reached end of non-looping animation
+
+              setOAM();
+
+              return true;
+            }
 	}
 
       currentFrameIndex = currAnim->frames[currentFrame].index;
