@@ -89,7 +89,11 @@
    Update the pages www/downloads.php and www/tutorial.php so that
    they contain references to the new release.
 
-   Commit the bump of version and the updated PHP pages.
+   Optionally write a news entry in www/index.php.
+
+   Add an entry to the NEWS file.
+
+   Commit the bump of version and the other updated files.
 
    Create a tag for the new release:
      git tag -a rage-<VERSION> -m "Release <VERSION> of Rage"
