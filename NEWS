@@ -1,9 +1,9 @@
-Release 0.1.1 - 2009-07-11 ----------------------------------------------------
+Release 0.1.1 - 2010-07-11 ----------------------------------------------------
 
 * Bugfix for non-looping animations (showed index 0 after animation finished)
 * Bugfix for displaying first frame of animation
 
 
-Release 1 - 2009-07-01 --------------------------------------------------------
+Release 1 - 2010-07-01 --------------------------------------------------------
 
 * First release of Rage, so that's the news for the day!
