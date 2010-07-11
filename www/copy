@@ -9,5 +9,8 @@ cp -r ../doc/api/html ~/public_html/rage/api
 [ -f ../doc/specification/funcspec1.txt ] && \
     cp -r ../doc/specification/funcspec1.txt ~/public_html/rage
 
+[ -f ../doc/specification/funcspec1.txt ] || \
+    echo Warning: Unable to find doc/specification/funcspec1.txt
+
 mkdir -p ~/public_html/rage/files
 cp ../../releases/* ~/public_html/rage/files
