@@ -79,9 +79,23 @@
 *** examples
     Recursively compiles the examples.
 ** Making a release
-   To make a release, simply cd to the root of rage, and issue the
-   commands bin/makesrcdist and bin/makebindist. This will create
-   .tar.bz2 and .zip files and place them in ../releases/.
+*** Introduction
+   This is mostly a reference for myself when making a release, but
+   you might be interested in the release procedure.
+*** Steps
+   Update the RAGEVERSION variable in bin/version to the new version
+   of Rage.
+
+   Update the pages www/downloads.php and www/tutorial.php so that
+   they contain references to the new release.
+
+   Commit the bump of version and the updated PHP pages.
+
+   Create a tag for the new release:
+     git tag -a rage-<VERSION> -m "Release <VERSION> of Rage"
+
+   Execute the commands bin/makesrcdist and bin/makebindist. This will
+   create .tar.bz2 and .zip files and place them in ../releases/.
 ** What's with all the ******* stars?
    Well, this is an org-mode file. You can learn about org-mode at
    <http://orgmode.org>. Basically, it's an outline mode++ for Emacs.
