@@ -20,6 +20,16 @@ please see <a href="about.php">About Rage</a>.
 
 <table class="indent">
 
+<tr><td class="heading"><b> 2010-07-11 </b></td></tr>
+<tr><td>
+
+I'm currently coding on something that actually uses Rage, so I've
+been able to find some bugs! Both bugs were related to animating
+sprites, and both are fixed. You can find a new release on the
+<a href="downloads.php">downloads</a> page.
+
+<br/><br/></td></tr>
+
 <tr><td class="heading"><b> 2010-07-01 </b></td></tr>
 <tr><td>
 
