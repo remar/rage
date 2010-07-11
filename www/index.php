@@ -6,6 +6,8 @@
   </head>
 <body>
 
+<?php global $page; $page = 1; ?>
+
 <?php include('menu.html'); ?>
 
 <p>

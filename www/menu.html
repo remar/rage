@@ -1,12 +1,31 @@
 
 <h1><img src="gfx/rage.png" /> Remar's Abstract Graphics Engine</h1>
 
+<?php global $page; ?>
+
 <p>
-<a href="index.php">News</a> - 
-<a href="about.php">About Rage</a> - 
-<a href="downloads.php">Downloads</a> - 
-<a href="doc.php">Documentation</a> - 
-<a href="tutorial.php">Tutorial</a> - 
+<?php if($page == 1) echo("<b>"); ?>
+<a href="index.php">News</a>
+<?php if($page == 1) echo("</b>"); ?>
+ - 
+<?php if($page == 2) echo("<b>"); ?>
+<a href="about.php">About Rage</a>
+<?php if($page == 2) echo("</b>"); ?>
+ - 
+<?php if($page == 3) echo("<b>"); ?>
+<a href="downloads.php">Downloads</a>
+<?php if($page == 3) echo("</b>"); ?>
+ - 
+<?php if($page == 4) echo("<b>"); ?>
+<a href="doc.php">Documentation</a>
+<?php if($page == 4) echo("</b>"); ?>
+ - 
+<?php if($page == 5) echo("<b>"); ?>
+<a href="tutorial.php">Tutorial</a>
+<?php if($page == 5) echo("</b>"); ?>
+ - 
+<?php if($page == 6) echo("<b>"); ?>
 <a href="contact.php">Contacting</a>
+<?php if($page == 6) echo("</b>"); ?>
 </p>
 

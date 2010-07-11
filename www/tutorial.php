@@ -5,6 +5,8 @@
   </head>
 <body>
 
+<?php global $page; $page = 5; ?>
+
 <?php include('menu.html'); ?>
 
 <h2>Introduction</h2>
