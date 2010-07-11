@@ -22,7 +22,7 @@ rmdir doc/api/html
 (cd README-files/ && m4 README.bindist) > README
 
 mkdir -p $RAGE
-cp -r include lib examples doc README $RAGE
+cp -r include lib examples doc README NEWS $RAGE
 rm README
 rm $RAGE/doc/api/Doxyfile
 cp Makefile.bindist $RAGE/Makefile

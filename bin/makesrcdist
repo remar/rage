@@ -13,7 +13,7 @@ RAGE=rage-src-$RAGEVERSION
 
 make clean
 mkdir -p $RAGE
-cp -r doc source examples Makefile README $RAGE
+cp -r doc source examples Makefile README NEWS $RAGE
 rm README
 tar cjvf $RAGE.tar.bz2 $RAGE
 zip -r $RAGE.zip $RAGE
