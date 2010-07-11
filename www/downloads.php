@@ -14,19 +14,15 @@ Rage. Take your pick!</p>
 
 <table class="indent">
 
-<tr><td class="heading"><b> Rage version 1 </b></td><td></td><tr>
+<tr><td class="heading"><b> Rage version 0.1 </b></td><tr>
 
-<tr><td><a href="files/rage-1.tar.bz2">rage-1.tar.bz2</a></td>
-<td>123 kB</td></tr>
+<tr><td><a href="files/rage-0.1.1.tar.bz2">rage-0.1.1.tar.bz2</a></td></tr>
 
-<tr><td><a href="files/rage-1.zip">rage-1.zip</a></td>
-<td>178 kB</td></tr>
+<tr><td><a href="files/rage-0.1.1.zip">rage-0.1.1.zip</a></td></tr>
 
-<tr><td><a href="files/rage-src-1.tar.bz2">rage-src-1.tar.bz2</td>
-<td>52 kB</td></tr>
+<tr><td><a href="files/rage-src-0.1.1.tar.bz2">rage-src-0.1.1.tar.bz2</td></tr>
 
-<tr><td><a href="files/rage-src-1.zip">rage-src-1.zip</td>
-<td>90 kB</td></tr>
+<tr><td><a href="files/rage-src-0.1.1.zip">rage-src-0.1.1.zip</td></tr>
 
 </table>
 
