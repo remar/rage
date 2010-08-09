@@ -192,6 +192,11 @@
    There are a couple of methods that can be useful when debugging a
    program.
 
+   Use Rage::getErrorCode to get the current error code. Call this
+   method immediately after getting an error code from a Rage method
+   call, to see what went wrong. In general, a return value of 0
+   indicates an error.
+
    Use Rage::getErrorString to get the current error as a string
    instead of an integer. This is useful to output the error to a
    console.
