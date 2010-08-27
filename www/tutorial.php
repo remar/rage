@@ -947,7 +947,7 @@ you find any errors in this tutorial, or in Rage in general, be sure
 to <a href="contact.php">tell me</a> about it.</p>
 
 <p>You can read the documentation for Rage <a href="api">here</a>, and
-get a listing of rage.h <a href="api/rage_8h-source.html">here</a>.</p>
+get a listing of rage.h <a href="api/rage_8h_source.html">here</a>.</p>
 
 <p>One last thing. Who's Captain Good? Oh, it's the main character
 from <a href="http://remar.se/daniel/retrobattle.php">Retrobattle</a>
