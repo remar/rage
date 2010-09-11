@@ -1,0 +1,2 @@
+#!/bin/bash
+scp *.php *.html *.css *.txt remar@ftp.scorpionshops.com:~/remar.se/www/andreas/rage/.
