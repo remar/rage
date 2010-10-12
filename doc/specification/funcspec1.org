@@ -316,6 +316,8 @@
      and 15. Use the tileset ID when methods below asks for a tileSet.
 **** int unloadTileSet(Screen screen, u16 tileSet)
      Remove tileset graphics from VRAM.
+**** int unloadAllTileSets(Screen screen)
+     Remove all tilesets graphics from VRAM.
 **** int setTile(Screen screen, int layer, int x, int y, u16 tileSet, u16 tile)
      Sets a tile in the abstract tilemap.
 **** int setMap(Screen screen, int layer, Tile *map)
