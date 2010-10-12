@@ -1,0 +1,76 @@
+* Functional specification
+** Project
+   RAGE - Remar's Abstract Graphics Engine
+   Nintendo DS graphics engine with a C++ interface
+
+   This is version 2 of the specification
+** Author
+   Andreas Remar, andreas.remar@gmail.com
+** Scenarios
+*** Scenario #1, Castle of Elite
+    The ace coder that participated in the development of Rage 1 has
+    become frustrated! Whenever he adds a new sprite or tileset to his
+    game, he has to manually change the palette of all the previous
+    images that he has added to the project.
+
+    To improve on the situation, Spiff upgrades to Rage version 2,
+    which has automatic palette blending. Now, when adding a new
+    sprite (in this case a coin sprite, you pick up coins in Castle of
+    Elite, ya know), he doesn't have to update the Guy sprite and the
+    Goal sprite to accomodate for this.
+
+    Being even more delighted with what he sees, Spiff goes on to
+    become even more world famous!
+*** Scenario #2, Castle of Elite
+    When trying to implement a bonus level in CoE, Spiff realises that
+    Rage 1 can't do scrolling! Spiff becomes sad and starts to cry!
+    But no worries, Mr. Spiff, Rage version 2 comes with new scrolling
+    capabilities! With this new capability, Spiff is able to create
+    scrollable surfaces that can either scroll vertically,
+    horizontally, or both at the same time!
+
+    To create the bonus level, Spiff creates a horizontally scrollable
+    surface, and builds his new bonus level in CoE.
+** Current features
+   These are the current features provided by Rage version 1:
+*** Background abstraction with varying tile dimension
+*** Sprite handling with animations
+** Goals
+   These are the goals for Rage version 2:
+*** Scrolling backgrounds (vertical, horizontal, multidir)
+*** Automatic palette blending
+*** Add a method to unload all sprites (similar to unloading all tilesets)
+** Nongoals
+   The second version of the graphics engine will not support the
+   following features, but many will be included in later versions:
+*** Sprite rotation and scaling
+*** Better control of background tiles (e.g. mirroring)
+*** Better control of the VRAM mappings
+*** Being able to choose color depth (4bpp, 8bpp, 16bpp)
+*** Usage of rotation and extended rotation backgrounds
+*** Abstraction for scrolling "views" (large maps)
+*** Different ways of reading in graphics (file system, included in code)
+*** Reading some graphics format (png?)
+*** Provide a console for debugging the graphics engine
+*** Provide a diagnostics screen showing memory allocation/fragmentation
+** Overview
+   The overview is similar to the overview in version 1 of the
+   specification (Rage 1), but I will note the differences.
+*** 1. Initialization
+    When initializing Rage you will have to decide how much space you
+    will allocate for the background maps. How this will look like is
+    something that will appear as we go along.
+*** 2. Background layout
+    The difference here is that the user must determine how big the
+    tilemap should be. The previous default was 32x32 (but the user
+    could only use 32x24). Now the user will have to decide between
+    32x32, 64x32, 32x64, or 64x64.
+*** 3. Continous updating
+    Besides the normal updating of sprites (moving, changing
+    animations), and updating the background by setting tiles, the
+    user can also scroll the various background layers.
+** Details
+*** Data structures
+    No new data structures will be used in Rage 2. See funcspec1.org
+    for details on the data structures.
+*** Methods
