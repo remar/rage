@@ -3,7 +3,7 @@
    RAGE - Remar's Abstract Graphics Engine
    Nintendo DS graphics engine with a C++ interface
 
-   This is version 2 of the specification
+   This is version 2 of the specification.
 ** Author
    Andreas Remar, andreas.remar@gmail.com
 ** Scenarios
@@ -38,6 +38,18 @@
 ** Goals
    These are the goals for Rage version 2:
 *** Scrolling backgrounds (vertical, horizontal, multidir)
+**** Technical note
+    This will require the use of larger backgrounds, so when
+    initializing Rage, the user will have to specify how much space
+    that will be needed for background maps.
+
+    This will also require that setupBackground somehow handles the
+    allocation of background maps. So some kind of allocator for maps
+    is needed.
+
+    Setting tiles will also be changed as the maps will become bigger
+    in size. Some kind of helper function for setting the correct tile
+    will be needed.
 *** Automatic palette blending
 *** Add a method to unload all sprites (similar to unloading all tilesets)
 ** Nongoals
@@ -55,11 +67,10 @@
 *** Provide a diagnostics screen showing memory allocation/fragmentation
 ** Overview
    The overview is similar to the overview in version 1 of the
-   specification (Rage 1), but I will note the differences.
+   specification (funcspec1.org), but I will note the differences:
 *** 1. Initialization
     When initializing Rage you will have to decide how much space you
-    will allocate for the background maps. How this will look like is
-    something that will appear as we go along.
+    will allocate for the background maps.
 *** 2. Background layout
     The difference here is that the user must determine how big the
     tilemap should be. The previous default was 32x32 (but the user
@@ -71,6 +82,65 @@
     user can also scroll the various background layers.
 ** Details
 *** Data structures
-    No new data structures will be used in Rage 2. See funcspec1.org
-    for details on the data structures.
+    Definitions and explanations of data structures that are exposed
+    to the user of the graphics engine. These are in addition to the
+    data structures that were defined in funcspec1.org.
+**** BGMapMemSize
+     The various sizes that can be allocated to hold the maps of the
+     backgrounds.
+***** Technical notes
+      This is to decide how much space will be allocated for
+      background maps.
+
+      Each map consists of 1, 2, or 4 cells, each cell taking up 2
+      kB. There are four background layers per engine, so the maximum
+      usage will be 4 (cells) * 4 (layers) * 2 (per cell) kB = 32 kB.
+
+      enum BGMapMemSize {BG_MAPMEM_SIZE_16K, BG_MAPMEM_SIZE_32K};
+
+      The VRAM available for tile graphics will be 128k - map size. So
+      if the user selects 32K map size, there will be 96 kB available
+      for tile graphics. Otherwise there will be 112 kB available.
+**** BGMapSize
+     The various map sizes: 256x256, 512x256, 256x512, and 512x512
+     pixels.
+***** Technical notes
+      The size in pixels that a map will be. An enum like this maybe:
+
+      enum BGMapSize {BG_MAP_256x256, BG_MAP_512x256, BG_MAP_256x512,
+                      BG_MAP_512x512};
 *** Methods
+**** int init(BGMapSize mainBGSize, BGMapSize subBGSize)
+     Setup the standard mappings and graphic modes for the two
+     hardware graphics engines. The mainBGSize and subBGSize
+     parameters determines how much space that will be allocated to
+     hold background maps. "BG_MAPMEM_SIZE_16K ought to be enough for
+     anybody!"
+**** int setupBackground(Screen screen, int layer, BGMapSize bgMapSize, int tileWidth, int tileHeight)
+     Set up a background, same as in Rage 1, but you must provide a
+     BGMapSize as well.
+***** Technical notes
+      Will require a simple allocator for maps.
+**** int setTile(Screen screen, int layer, int x, int y, u16 tileSet, u16 tile)
+     Mostly the same as in Rage 1, the difference is in the technical
+     details.
+***** Technical notes
+      Will require a smarter implementation to deal with abstract
+      tiles that cross cell borders.
+**** int setBackgroundScroll(Screen screen, int layer, int x, int y)
+     Set the scroll for the given background layer. x and y can be
+     positive or negative.
+**** int unloadAllSprites(Screen screen)
+     Unload all loaded sprites from the specified screen.
+*** Internal changes
+**** Palette blending
+     When loading a sprite (or tileset) its palette should be merged
+     to the current sprite (or tileset) palette. The first index color
+     (i.e. index 0) will be used for transparency, regardless of what
+     color that index represents.
+
+     When unloading a sprite (or tileset), the palette should be
+     restored to how it would be like if that sprite (or tileset) were
+     never loaded.
+
+     WARNING: This feature might require some heavy thinking! 8-)
