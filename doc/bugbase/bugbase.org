@@ -1,5 +1,6 @@
 * Bug database for Rage
-** Recreating sprite instances seems to delay animation
-   Saw this when developing TrioDS. When first placing, then removing,
-   and then placing a marker again, the animation seems to be delayed
-   in the beginning.
+** Rage 0.1.1
+*** TODO #1, Recreating sprite instances seems to delay animation
+    Saw this when developing TrioDS. When first placing, then removing,
+    and then placing a marker again, the animation seems to be delayed
+    in the beginning.
