@@ -109,8 +109,14 @@
 
       enum BGMapSize {BG_MAP_256x256, BG_MAP_512x256, BG_MAP_256x512,
                       BG_MAP_512x512};
+**** Error codes
+     Whenever a function call fails for some reason, an internal error
+     state is set to one of these values. These error codes are in
+     addition to the error codes in funcspec1.org.
+***** BAD_MAP_SIZE
+***** OUT_OF_MAP_MEMORY
 *** Methods
-**** int init(BGMapSize mainBGSize, BGMapSize subBGSize)
+**** int init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
      Setup the standard mappings and graphic modes for the two
      hardware graphics engines. The mainBGSize and subBGSize
      parameters determines how much space that will be allocated to
@@ -121,6 +127,9 @@
      BGMapSize as well.
 ***** Technical notes
       Will require a simple allocator for maps.
+**** int releaseBackground(Screen screen, int layer)
+     Used to "uninitialize" a background, thus freeing up map memory
+     for other layers.
 **** int setTile(Screen screen, int layer, int x, int y, u16 tileSet, u16 tile)
      Mostly the same as in Rage 1, the difference is in the technical
      details.

@@ -330,6 +330,8 @@ class Rage
       BAD_SPRITE_INDEX,
       SPRITE_NOT_LOADED,
       BAD_ANIMATION_ID,
+      BAD_MAP_SIZE,
+      OUT_OF_MAP_MEMORY,
       LAST_ERROR_CODE
     };
 
@@ -351,6 +353,16 @@ class Rage
   /** Definitions used to point out which VRAM to use. */
   enum Type {SPRITE = 0, BG = 1};
 
+  /** The two available choices for map memory size. */
+  enum BGMapMemSize {BG_MAPMEM_SIZE_16K, /**< 16k map memory, 112k tile memory */
+		     BG_MAPMEM_SIZE_32K  /**< 32k map memory, 96k tile memory */};
+
+  /** The various map sizes, in pixels. */
+  enum BGMapSize {BG_MAP_256x256 = 0,
+		  BG_MAP_512x256 = 1,
+		  BG_MAP_256x512 = 2,
+		  BG_MAP_512x512 = 3};
+
   // In general, a method will return 0 to indicate failure
 #define RAGE_FAILED(x) ((x) == 0)
 
@@ -362,8 +374,14 @@ class Rage
 
   /** Sets up the two screens and initializes the OAM structs.
 
+      @param mainBGSize How much memory that will be allocated for
+      background maps for the main screen.
+
+      @param subBGSize How much memory that will be allocated for
+      background maps for the sub screen.
+      
       @return 0 on failure, 1 on success. */
-  int init();
+  int init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize);
 
   /** Returns the error code, use after a method indicates an
       error. 
@@ -391,16 +409,19 @@ class Rage
       tileHeight must be divisible by 8, so valid values are 8, 16,
       24, 32, and so on.
 
-      @param s Screen to set up background on, Rage::MAIN or Rage::SUB. 
+      @param s Screen to set up background on, Rage::MAIN or Rage::SUB.
 
-      @param layer Which layer to set up, a value between 0 and 3. 
+      @param layer Which layer to set up, a value between 0 and 3.
 
-      @param tileWidth The width of a tile. Must be divisible by 8. 
+      @param bgMapSize Size of this layer.
+
+      @param tileWidth The width of a tile. Must be divisible by 8.
 
       @param tileHeight The height of a tile. Must be divisible by 8.
 
       @return 0 on failure, 1 on success. */
-  int setupBackground(Screen s, u16 layer, u16 tileWidth, u16 tileHeight);
+  int setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
+		      u16 tileWidth, u16 tileHeight);
 
   /** Load a tileset into VRAM.
       

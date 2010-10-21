@@ -29,6 +29,7 @@
 #include "SpriteInstance.h"
 #include "ImageCache.h"
 #include "Allocator.h"
+#include "MapAllocator.h"
 #include "internalstructures.h"
 
 Allocator allocator;
@@ -39,8 +40,14 @@ int bgID[2][4];
 
 Rage::ErrorCode errorCode;
 
+bool tileMapSetUp[2][4];
+
 enum {TILE_WIDTH, TILE_HEIGHT, MAP_WIDTH, MAP_HEIGHT};
 u16 tileMapDimensions[2][4][4];
+
+Rage::BGMapMemSize mapMemSize[2];
+
+Rage::BGMapSize tileMapSize[2][4];
 
 u16 tileMapInternal[32*24];
 
@@ -171,6 +178,20 @@ int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
 
   return 1;
 }
+
+int mapSizeToWidth(Rage::BGMapSize bgMapSize)
+{
+  int width[] = {32, 64, 32, 64};
+
+  return width[bgMapSize];
+}
+
+int mapSizeToHeight(Rage::BGMapSize bgMapSize)
+{
+  int height[] = {32, 32, 64, 64};
+
+  return height[bgMapSize];
+}
 // -INTERNAL-
 
 Rage::Rage()
@@ -196,10 +217,16 @@ Rage::Rage()
   outOfSpriteIndices[SUB]  = false;
   spriteInstancesLeft[MAIN] = 128;
   spriteInstancesLeft[SUB]  = 128;
+
+  for(int i = 0;i < 4;i++)
+    {
+      tileMapSetUp[MAIN][i] = false;
+      tileMapSetUp[SUB][i] = false;
+    }
 }
 
 int
-Rage::init()
+Rage::init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
 {
   videoSetMode(MODE_0_2D);
   vramSetBankA(VRAM_A_MAIN_BG);
@@ -211,6 +238,12 @@ Rage::init()
 
   oamInit(&oamMain, SpriteMapping_1D_32, false);
   oamInit(&oamSub, SpriteMapping_1D_32, false);
+
+  mapMemSize[MAIN] = mainBGSize;
+  mapMemSize[SUB] = subBGSize;
+
+  // TODO: Tell allocator how much memory is available for background
+  // graphics
 
   return 1;
 }
@@ -267,10 +300,20 @@ Rage::selectOnTop(Screen s)
 }
 
 int
-Rage::setupBackground(Screen s, u16 layer, u16 tileWidth, u16 tileHeight)
+Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
+		      u16 tileWidth, u16 tileHeight)
 {
   VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
+
+  if(!(bgMapSize == BG_MAP_256x256
+       || bgMapSize == BG_MAP_512x256
+       || bgMapSize == BG_MAP_256x512
+       || bgMapSize == BG_MAP_512x512))
+    {
+      errorCode = BAD_MAP_SIZE;
+      return 0;
+    }
   
   if(tileWidth < 8 || (tileWidth % 8) != 0
      || tileHeight < 8 || (tileHeight % 8) != 0)
@@ -279,27 +322,53 @@ Rage::setupBackground(Screen s, u16 layer, u16 tileWidth, u16 tileHeight)
       return 0;
     }
 
-  int w, h;
-  w = tileWidth / 8;
-  h = tileHeight / 8;
+  if(tileMapSetUp[s][layer])
+    {
+      // TODO: Call releaseBackground to clear old map (or generate an
+      // error?)
+    }
 
-  tileMapDimensions[s][layer][TILE_WIDTH] = w;
-  tileMapDimensions[s][layer][TILE_HEIGHT] = h;
-  tileMapDimensions[s][layer][MAP_WIDTH] = (32 / w) + !!(32 % w);
-  tileMapDimensions[s][layer][MAP_HEIGHT] = (24 / h) + !!(24 % h);
+  // TODO: Note: Might refactor all these different tileMapSize,
+  // tileMapDimensions, tileMapSetUp and so on into a struct...
+
+  tileMapSize[s][layer] = bgMapSize;
+
+  tileWidth /= 8;
+  tileHeight /= 8;
+
+  int mapWidth = mapSizeToWidth(bgMapSize);
+  int mapHeight = mapSizeToHeight(bgMapSize);
+
+  tileMapDimensions[s][layer][TILE_WIDTH] = tileWidth;
+  tileMapDimensions[s][layer][TILE_HEIGHT] = tileHeight;
+  tileMapDimensions[s][layer][MAP_WIDTH] = (mapWidth / tileWidth) + !!(mapWidth % tileWidth);
+  tileMapDimensions[s][layer][MAP_HEIGHT] = (mapHeight / tileHeight) + !!(mapHeight % tileHeight);
+
+  // TODO: Maybe add allocation of maps to existing Allocator? Would
+  // reuse code in a nice way.
+
+  int offset = mapAllocator.allocateMap(s, bgMapSize);
+
+  if(offset == -1) // Out of map memory?
+    {
+      errorCode = OUT_OF_MAP_MEMORY;
+      return 0;
+    }
 
   if(s == MAIN)
     {
       bgID[MAIN][layer] = bgInit(layer, BgType_Text8bpp, BgSize_T_256x256,
-				 layer,
-				 1);
+				 offset,
+				 1 /* TODO: This will be 1 or 2 */);
     }
   else
     {
       bgID[SUB][layer] = bgInitSub(layer, BgType_Text8bpp, BgSize_T_256x256,
-				   layer,
-				   1);
+				   offset,
+				   1 /* TODO: This will be 1 or 2 */);
     }
+
+  tileMapSetUp[s][layer] = true;
 
   return 1;
 }
@@ -729,6 +798,8 @@ Rage::getErrorString()
       "Bad sprite instance",
       "No such sprite loaded",
       "Bad animation ID",
+      "Bad map size",
+      "Out of map memory"
     };
 
   if(errorCode < NO_ERROR || errorCode >= LAST_ERROR_CODE)
