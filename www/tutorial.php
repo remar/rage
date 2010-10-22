@@ -68,10 +68,10 @@ href="contact.php">contact</a> me, I might actually fix it.
 <p>Installing Rage should be pretty simple, follow these easy steps:</p>
 
 <ul>
-<li>Download <a href="files/rage-0.1.1.tar.bz2">rage-0.1.1.tar.bz2</a> or <a
-href="files/rage-0.1.1.zip">rage-0.1.1.zip</a> from this site</li>
+<li>Download <a href="files/rage-0.1.2.tar.bz2">rage-0.1.2.tar.bz2</a> or <a
+href="files/rage-0.1.2.zip">rage-0.1.2.zip</a> from this site</li>
 <li>Unpack somewhere</li>
-<li>Open up a shell, go into the rage-1 directory, and type 'make install'</li>
+<li>Open up a shell, go into the rage-0.1.2 directory, and type 'make install'</li>
 </ul>
 
 <p>
