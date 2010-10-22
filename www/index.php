@@ -20,6 +20,16 @@ please see <a href="about.php">About Rage</a>.
 
 <table class="indent">
 
+<tr><td class="heading"><b> 2010-10-22 </b></td></tr>
+<tr><td>
+
+So.. after a little downtime when it comes to coding I've started
+again. When working on a little side project I found another bug in
+Rage, so here's Rage 0.1.2! As always, you can find the new release on
+the <a href="downloads.php">downloads</a> page.
+
+<br/><br/></td></tr>
+
 <tr><td class="heading"><b> 2010-07-11 </b></td></tr>
 <tr><td>
 
