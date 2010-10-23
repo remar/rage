@@ -11,3 +11,5 @@ cp -r ../doc/api/html ~/public_html/rage/api
 
 mkdir -p ~/public_html/rage/files
 cp ../../releases/* ~/public_html/rage/files
+
+cp upload-* ~/public_html/rage
