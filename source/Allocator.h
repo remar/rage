@@ -57,7 +57,10 @@ class Allocator
 
   /* Returns 2k offset into VRAM where map will fit. Returns -1 on
      failure (OOM). */
-  int allocateMap(Rage::Screen, Rage::BGMapSize mapSize);
+  int allocateMap(Rage::Screen s, Rage::BGMapSize mapSize);
+
+  /* Return map ram to map pool */
+  void releaseMap(Rage::Screen s, Rage::BGMapSize mapSize, int offset);
 
   void addFreeBlock(Rage::Screen s, Rage::Type t, int offset, int length);
   int sumFreeBlocks(Rage::Screen s, Rage::Type t);

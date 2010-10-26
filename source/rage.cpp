@@ -236,6 +236,8 @@ Rage::init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
   mapMemSize[MAIN] = mainBGSize;
   mapMemSize[SUB] = subBGSize;
 
+  consoleDemoInit();
+
   // Tell allocator how much memory is available for background
   // graphics
   allocator.init(mainBGSize, subBGSize);
@@ -322,8 +324,8 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
 
   if(tileMap[s][layer].loaded)
     {
-      // TODO: Call releaseBackground to clear old map (or generate an
-      // error?)
+      // Free up map memory
+      releaseBackground(s, layer);
     }
 
   tileMap[s][layer].mapSize = bgMapSize;
@@ -340,6 +342,8 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
   tileMap[s][layer].mapHeight = (mapHeight / tileHeight) + !!(mapHeight % tileHeight);
 
   int offset = allocator.allocateMap(s, bgMapSize);
+
+  tileMap[s][layer].offset = offset;
 
   if(offset == -1) // Out of map memory?
     {
@@ -373,7 +377,20 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
 int
 Rage::releaseBackground(Screen s, u16 layer)
 {
-  return 0; // FAIL ME !
+  VALID_SCREEN_CHECK(s);
+  VALID_LAYER_CHECK(layer);
+
+  if(tileMap[s][layer].loaded == false)
+    {
+      errorCode = BAD_LAYER;
+      return 0;
+    }
+
+  allocator.releaseMap(s, tileMap[s][layer].mapSize, tileMap[s][layer].offset);
+
+  tileMap[s][layer].loaded = false;
+
+  return 1;
 }
 
 int
@@ -408,12 +425,12 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
   // copy tile graphics to VRAM and palette to palette area
   if(s == MAIN)
     {
-      dmaCopy(def->image.gfx, mainBGVram + offset, def->image.gfxLen);
+      dmaCopy(def->image.gfx, (u16*)((int)mainBGVram + offset), def->image.gfxLen);
       dmaCopy(def->image.pal, BG_PALETTE, def->image.palLen);
     }
   else
     {
-      dmaCopy(def->image.gfx, subBGVram + offset, def->image.gfxLen);
+      dmaCopy(def->image.gfx, (u16*)((int)subBGVram + offset), def->image.gfxLen);
       dmaCopy(def->image.pal, BG_PALETTE_SUB, def->image.palLen);
     }
 

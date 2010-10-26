@@ -25,14 +25,15 @@ int main(void)
 {
   srand(time(0));
 
-  TRY(rage.init()); // setup default VRAM mappings and screen modes
+  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K)); // setup default VRAM mappings and screen modes
 
   TRY(rage.setupBackground(Rage::MAIN, /* screen, Rage::MAIN or Rage::SUB */
 			   0  /* layer, 0-3, 0 in front, 3 in back */,
+			   Rage::BG_MAP_256x256,
 			   32 /* tile width, must be divisible by 8 */,
 			   32 /* tile height, must be divisible by 8 */));
 
-  TRY(rage.setupBackground(Rage::SUB, 0, 16, 16));
+  TRY(rage.setupBackground(Rage::SUB, 0, Rage::BG_MAP_256x256, 16, 16));
 
 #include "bonusdef.h"   // define bonusDef, 32x32 tileset
 #include "blockdef.h"   // define blockDef, 16x16 tileset

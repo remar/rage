@@ -31,6 +31,9 @@ struct TileMap
 
   // keep track of background ID returned by libnds API
   int bgID;
+
+  // 2k offset into VRAM where the map is located
+  int offset;
 };
 
 #endif

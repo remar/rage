@@ -1,7 +1,7 @@
 /*
-  RAGE demo 01
+  RAGE demo 05
 
-  The first introductory demo of Remar's Abstract Graphics Engine.
+  DEBUG
 */
 
 #include "rage.h"
@@ -12,9 +12,9 @@ Rage rage;
 
 void displayError()
 {
-  // consoleDemoInit();
+  consoleDemoInit();
 
-  printf("%s\n", rage.getErrorString());
+  printf("[Rage] %s\n", rage.getErrorString());
 
   while(1){}
 }
@@ -24,27 +24,25 @@ void displayError()
 int main(void)
 {
   // setup default VRAM mappings and screen modes
-  TRY(rage.init(Rage::BG_MAPMEM_SIZE_32K, Rage::BG_MAPMEM_SIZE_16K));
+  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K));
 
   srand(time(0));
 
-  TRY(rage.setupBackground(Rage::MAIN, /* screen, Rage::MAIN or Rage::SUB */
-			   0  /* layer, 0-3, 0 in front, 3 in back */,
-			   Rage::BG_MAP_512x512, /* map size in pixels;
-						    256x256, 512x256,
-						    256x512, or 512x512*/
-			   32 /* tile width, must be divisible by 8 */,
-			   32 /* tile height, must be divisible by 8 */));
+  TRY(rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 16, 16));
+  TRY(rage.setupBackground(Rage::MAIN, 1, Rage::BG_MAP_256x256, 16, 16));
 
-#include "bonusdef.h"   // define bonusDef, 32x32 tileset
+#include "blockdef.h"
+  TRY(rage.loadTileSet(Rage::MAIN, &blockDef));
 
-  // load in large (32x32) tileset on the main screen
-  TRY(rage.loadTileSet(Rage::MAIN, &bonusDef));
+#include "metroiddef.h"
+  TRY(rage.loadTileSet(Rage::MAIN, &metroidDef));
 
-  for(int y = 0;y < 6;y++)
-    for(int x = 0;x < 8;x++)
+  for(int y = 0;y < 12;y++)
+    for(int x = 0;x < 16;x++)
       {
-	TRY(rage.setTile(Rage::MAIN, 0, x, y, BONUS_TILESET, rand()%16));
+	TRY(rage.setTile(Rage::MAIN, 1, x, y, BLOCK_TILESET, rand()%16+1));
+
+	TRY(rage.setTile(Rage::MAIN, 0, x, y, METROID_TILESET, rand()%4));
       }
 
   while(1)

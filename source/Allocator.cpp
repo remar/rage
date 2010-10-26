@@ -101,6 +101,15 @@ Allocator::allocateMap(Rage::Screen s, Rage::BGMapSize mapSize)
 }
 
 void
+Allocator::releaseMap(Rage::Screen s, Rage::BGMapSize mapSize, int offset)
+{
+  // Map from map size to chunk requirement
+  int memReq[4] = {1, 2, 2, 4};
+
+  addFreeBlock(s, Rage::MAP, offset, memReq[mapSize]);
+}
+
+void
 Allocator::addFreeBlock(Rage::Screen s, Rage::Type t, int offset, int length)
 {
   // locate blocks before and after the new block and merge blocks
