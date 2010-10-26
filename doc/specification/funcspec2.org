@@ -109,6 +109,11 @@
 
       enum BGMapSize {BG_MAP_256x256, BG_MAP_512x256, BG_MAP_256x512,
                       BG_MAP_512x512};
+**** Type
+     Must expand this enum to incorporate pointing to map memory as
+     well. So the enum will look like this:
+
+     enum Type {SPRITE = 0, BG = 1, MAP = 2};
 **** Error codes
      Whenever a function call fails for some reason, an internal error
      state is set to one of these values. These error codes are in
