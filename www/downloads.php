@@ -9,13 +9,13 @@ Rage. Take your pick!</p>
 
 <tr><td class="heading"><b> Rage version 0.1 </b></td><tr>
 
-<tr><td><a href="files/rage-0.1.1.tar.bz2">rage-0.1.1.tar.bz2</a></td></tr>
+<tr><td><a href="files/rage-0.1.2.tar.bz2">rage-0.1.2.tar.bz2</a></td></tr>
 
-<tr><td><a href="files/rage-0.1.1.zip">rage-0.1.1.zip</a></td></tr>
+<tr><td><a href="files/rage-0.1.2.zip">rage-0.1.2.zip</a></td></tr>
 
-<tr><td><a href="files/rage-src-0.1.1.tar.bz2">rage-src-0.1.1.tar.bz2</td></tr>
+<tr><td><a href="files/rage-src-0.1.2.tar.bz2">rage-src-0.1.2.tar.bz2</td></tr>
 
-<tr><td><a href="files/rage-src-0.1.1.zip">rage-src-0.1.1.zip</td></tr>
+<tr><td><a href="files/rage-src-0.1.2.zip">rage-src-0.1.2.zip</td></tr>
 
 </table>
 

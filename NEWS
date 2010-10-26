@@ -1,3 +1,9 @@
+Release 0.1.2 - 2010-10-22 ----------------------------------------------------
+
+* Bugfix for missing first frame of initial animation. Only showed up
+  when the user didn't set the initial animation himself.
+
+
 Release 0.1.1 - 2010-07-11 ----------------------------------------------------
 
 * Bugfix for non-looping animations (showed index 0 after animation finished)

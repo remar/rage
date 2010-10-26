@@ -164,12 +164,7 @@ SpriteInstance::setInitialAnimation()
   if(animationFrames == 0)
     return 0; // OOM
 
-  currentFrame = 0;
-  timeSpentInFrame = 0;
-
-  currAnim = &spriteDefinition->animations[currentAnimation];
-
-  stopAnimation = false;
+  setAnimation(currentAnimation);
 
   return 1;
 }

@@ -86,8 +86,11 @@
    Update the RAGEVERSION variable in bin/version to the new version
    of Rage.
 
-   Update the pages www/downloads.php and www/tutorial.php so that
-   they contain references to the new release.
+   Update the pages www/index.php, www/downloads.php, and
+   www/tutorial.php so that they contain references to the new
+   release.
+
+   Update the NEWS file with information about the new version.
 
    Optionally write a news entry in www/index.php.
 
