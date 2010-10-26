@@ -29,27 +29,18 @@
 #include "SpriteInstance.h"
 #include "ImageCache.h"
 #include "Allocator.h"
-#include "MapAllocator.h"
 #include "internalstructures.h"
 
 Allocator allocator;
 ImageCache imageCache(&allocator);
 
-// keep track of background ID returned by libnds API
-int bgID[2][4];
-
 Rage::ErrorCode errorCode;
 
-bool tileMapSetUp[2][4];
-
-enum {TILE_WIDTH, TILE_HEIGHT, MAP_WIDTH, MAP_HEIGHT};
-u16 tileMapDimensions[2][4][4];
+TileMap tileMap[2][4]; // 2 screens, 4 layers per screen
 
 Rage::BGMapMemSize mapMemSize[2];
 
-Rage::BGMapSize tileMapSize[2][4];
-
-u16 tileMapInternal[32*24];
+u16 tileMapInternal[64*64];
 
 #define SPRITE_PLUS 2048
 
@@ -93,6 +84,9 @@ int freeSpriteInstance[2];
 bool outOfSpriteIndices[2];
 int spriteInstancesLeft[2];
 
+u16 *mainBGVram;
+u16 *subBGVram;
+
 void locateNextSpriteIndex(Rage::Screen s)
 {
   int initialIndex = freeSpriteInstance[s];
@@ -115,6 +109,20 @@ void locateNextSpriteIndex(Rage::Screen s)
     }
 }
 
+int mapSizeToWidth(Rage::BGMapSize bgMapSize)
+{
+  int width[] = {32, 64, 32, 64};
+
+  return width[bgMapSize];
+}
+
+int mapSizeToHeight(Rage::BGMapSize bgMapSize)
+{
+  int height[] = {32, 32, 64, 64};
+
+  return height[bgMapSize];
+}
+
 enum Location {HARDWARE, INTERNAL_MAP}; // where to set tile
 
 int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
@@ -128,15 +136,15 @@ int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
       return 0;
     }
 
-  if(x >= tileMapDimensions[s][layer][MAP_WIDTH]
-     || y >= tileMapDimensions[s][layer][MAP_HEIGHT])
+  if(x >= tileMap[s][layer].mapWidth
+     || y >= tileMap[s][layer].mapHeight)
     {
       errorCode = Rage::BAD_TILE_COORDINATES;
       return 0;
     }
 
-  int tileWidth = tileMapDimensions[s][layer][TILE_WIDTH];
-  int tileHeight = tileMapDimensions[s][layer][TILE_HEIGHT];
+  int tileWidth = tileMap[s][layer].tileWidth;
+  int tileHeight = tileMap[s][layer].tileHeight;
 
   if(tile > tileSets[s][tileSet].size / (tileWidth * tileHeight))
     {
@@ -147,7 +155,7 @@ int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
   u16 *mapPtr;
 
   if(loc == HARDWARE)
-    mapPtr = bgGetMapPtr(bgID[s][layer]);
+    mapPtr = bgGetMapPtr(tileMap[s][layer].bgID);
   else if(loc == INTERNAL_MAP)
     mapPtr = tileMapInternal;
   else
@@ -178,20 +186,6 @@ int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
 
   return 1;
 }
-
-int mapSizeToWidth(Rage::BGMapSize bgMapSize)
-{
-  int width[] = {32, 64, 32, 64};
-
-  return width[bgMapSize];
-}
-
-int mapSizeToHeight(Rage::BGMapSize bgMapSize)
-{
-  int height[] = {32, 32, 64, 64};
-
-  return height[bgMapSize];
-}
 // -INTERNAL-
 
 Rage::Rage()
@@ -220,8 +214,8 @@ Rage::Rage()
 
   for(int i = 0;i < 4;i++)
     {
-      tileMapSetUp[MAIN][i] = false;
-      tileMapSetUp[SUB][i] = false;
+      tileMap[MAIN][i].loaded = false;
+      tileMap[SUB][i].loaded = false;
     }
 }
 
@@ -242,8 +236,12 @@ Rage::init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
   mapMemSize[MAIN] = mainBGSize;
   mapMemSize[SUB] = subBGSize;
 
-  // TODO: Tell allocator how much memory is available for background
+  // Tell allocator how much memory is available for background
   // graphics
+  allocator.init(mainBGSize, subBGSize);
+
+  mainBGVram = (mainBGSize == BG_MAPMEM_SIZE_16K ? (u16*)(0x06004000) : (u16*)(0x06008000));
+  subBGVram = (subBGSize == BG_MAPMEM_SIZE_16K ? (u16*)(0x06204000) : (u16*)(0x06204000));
 
   return 1;
 }
@@ -322,16 +320,13 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
       return 0;
     }
 
-  if(tileMapSetUp[s][layer])
+  if(tileMap[s][layer].loaded)
     {
       // TODO: Call releaseBackground to clear old map (or generate an
       // error?)
     }
 
-  // TODO: Note: Might refactor all these different tileMapSize,
-  // tileMapDimensions, tileMapSetUp and so on into a struct...
-
-  tileMapSize[s][layer] = bgMapSize;
+  tileMap[s][layer].mapSize = bgMapSize;
 
   tileWidth /= 8;
   tileHeight /= 8;
@@ -339,15 +334,12 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
   int mapWidth = mapSizeToWidth(bgMapSize);
   int mapHeight = mapSizeToHeight(bgMapSize);
 
-  tileMapDimensions[s][layer][TILE_WIDTH] = tileWidth;
-  tileMapDimensions[s][layer][TILE_HEIGHT] = tileHeight;
-  tileMapDimensions[s][layer][MAP_WIDTH] = (mapWidth / tileWidth) + !!(mapWidth % tileWidth);
-  tileMapDimensions[s][layer][MAP_HEIGHT] = (mapHeight / tileHeight) + !!(mapHeight % tileHeight);
+  tileMap[s][layer].tileWidth = tileWidth;
+  tileMap[s][layer].tileHeight = tileHeight;
+  tileMap[s][layer].mapWidth = (mapWidth / tileWidth) + !!(mapWidth % tileWidth);
+  tileMap[s][layer].mapHeight = (mapHeight / tileHeight) + !!(mapHeight % tileHeight);
 
-  // TODO: Maybe add allocation of maps to existing Allocator? Would
-  // reuse code in a nice way.
-
-  int offset = mapAllocator.allocateMap(s, bgMapSize);
+  int offset = allocator.allocateMap(s, bgMapSize);
 
   if(offset == -1) // Out of map memory?
     {
@@ -355,22 +347,33 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
       return 0;
     }
 
+  BgSize bgSizeMap[4] = {BgSize_T_256x256, BgSize_T_512x256,
+			 BgSize_T_256x512, BgSize_T_512x512};
+
+  int tileBase = mapMemSize[s] == BG_MAPMEM_SIZE_16K ? 1 : 2;
+
   if(s == MAIN)
     {
-      bgID[MAIN][layer] = bgInit(layer, BgType_Text8bpp, BgSize_T_256x256,
-				 offset,
-				 1 /* TODO: This will be 1 or 2 */);
+      tileMap[MAIN][layer].bgID = bgInit(layer, BgType_Text8bpp, bgSizeMap[bgMapSize],
+					 offset,
+					 tileBase);
     }
   else
     {
-      bgID[SUB][layer] = bgInitSub(layer, BgType_Text8bpp, BgSize_T_256x256,
-				   offset,
-				   1 /* TODO: This will be 1 or 2 */);
+      tileMap[SUB][layer].bgID = bgInitSub(layer, BgType_Text8bpp, bgSizeMap[bgMapSize],
+					   offset,
+					   tileBase);
     }
 
-  tileMapSetUp[s][layer] = true;
+  tileMap[s][layer].loaded = true;
 
   return 1;
+}
+
+int
+Rage::releaseBackground(Screen s, u16 layer)
+{
+  return 0; // FAIL ME !
 }
 
 int
@@ -405,12 +408,12 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
   // copy tile graphics to VRAM and palette to palette area
   if(s == MAIN)
     {
-      dmaCopy(def->image.gfx, (u16*)(0x06004000 + offset), def->image.gfxLen);
+      dmaCopy(def->image.gfx, mainBGVram + offset, def->image.gfxLen);
       dmaCopy(def->image.pal, BG_PALETTE, def->image.palLen);
     }
   else
     {
-      dmaCopy(def->image.gfx, (u16*)(0x06204000 + offset), def->image.gfxLen);
+      dmaCopy(def->image.gfx, subBGVram + offset, def->image.gfxLen);
       dmaCopy(def->image.pal, BG_PALETTE_SUB, def->image.palLen);
     }
 
@@ -472,8 +475,8 @@ Rage::setMap(Screen s, u16 layer, Tile *map)
   VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
 
-  int width = tileMapDimensions[s][layer][MAP_WIDTH];
-  int height = tileMapDimensions[s][layer][MAP_HEIGHT];
+  int width = tileMap[s][layer].mapWidth;
+  int height = tileMap[s][layer].mapHeight;
   Tile t;
 
   for(int y = 0;y < height;y++)
@@ -485,7 +488,7 @@ Rage::setMap(Screen s, u16 layer, Tile *map)
       }
 
   DC_FlushAll(); // make sure that the modifications are flushed to main ram
-  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[s][layer]),
+  dmaCopy(tileMapInternal, bgGetMapPtr(tileMap[s][layer].bgID),
 	  sizeof(tileMapInternal));
 
   return 1;
@@ -499,8 +502,8 @@ Rage::setMap(Screen s, u16 layer, u16 tileSet, u16 *map)
   VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(layer);
 
-  int width = tileMapDimensions[s][layer][MAP_WIDTH];
-  int height = tileMapDimensions[s][layer][MAP_HEIGHT];
+  int width = tileMap[s][layer].mapWidth;
+  int height = tileMap[s][layer].mapHeight;
 
   for(int y = 0;y < height;y++)
     for(int x = 0;x < width;x++)
@@ -511,7 +514,7 @@ Rage::setMap(Screen s, u16 layer, u16 tileSet, u16 *map)
       }
 
   DC_FlushAll(); // make sure that the modifications are flushed to main ram
-  dmaCopy(tileMapInternal, bgGetMapPtr(bgID[s][layer]),
+  dmaCopy(tileMapInternal, bgGetMapPtr(tileMap[s][layer].bgID),
 	  sizeof(tileMapInternal));
 
   return 1;

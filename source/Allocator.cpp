@@ -28,8 +28,18 @@ Allocator::Allocator()
 {
   addFreeBlock(Rage::MAIN, Rage::SPRITE, 0, SPRITE_BLOCKS);
   addFreeBlock(Rage::SUB,  Rage::SPRITE, 0, SPRITE_BLOCKS);
-  addFreeBlock(Rage::MAIN, Rage::BG,     0, BACKGROUND_BLOCKS);
-  addFreeBlock(Rage::SUB,  Rage::BG,     0, BACKGROUND_BLOCKS);  
+}
+
+void
+Allocator::init(Rage::BGMapMemSize mainBGSize, Rage::BGMapMemSize subBGSize)
+{
+  addFreeBlock(Rage::MAIN, Rage::BG,     0, BACKGROUND_BLOCKS - mainBGSize * MAP_BLOCKS);
+  addFreeBlock(Rage::SUB,  Rage::BG,     0, BACKGROUND_BLOCKS - subBGSize * MAP_BLOCKS);
+
+  addFreeBlock(Rage::MAIN, Rage::MAP, 0,
+	       mainBGSize == Rage::BG_MAPMEM_SIZE_16K ? MAP_CHUNKS_16K : MAP_CHUNKS_32K);
+  addFreeBlock(Rage::SUB, Rage::MAP, 0,
+	       subBGSize == Rage::BG_MAPMEM_SIZE_16K ? MAP_CHUNKS_16K : MAP_CHUNKS_32K);
 }
 
 int
@@ -57,6 +67,36 @@ Allocator::allocateVRAM(Rage::Screen s, Rage::Type t, int size)
 	}
     }
 
+  return -1;
+}
+
+int
+Allocator::allocateMap(Rage::Screen s, Rage::BGMapSize mapSize)
+{
+  std::list<MemoryBlock>::iterator it = freeBlocks[s][Rage::MAP].begin();
+
+  // Map from map size to chunk requirement
+  int memReq[4] = {1, 2, 2, 4};
+
+  for(;it != freeBlocks[s][Rage::MAP].end();it++)
+    {
+      if((*it).length >= memReq[mapSize])
+	{
+	  // Found free block
+	  int offset = (*it).offset;
+	  int length = (*it).length;
+
+	  // Remove block from list
+	  freeBlocks[s][Rage::MAP].erase(it);
+	  
+	  // Add new block of size 'length - size' and offset 'offset + size'
+	  if(length - memReq[mapSize] > 0)
+	    addFreeBlock(s, Rage::MAP, offset + memReq[mapSize], length - memReq[mapSize]);
+
+	  return offset;
+	}
+    }
+  
   return -1;
 }
 

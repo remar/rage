@@ -35,22 +35,37 @@ struct MemoryBlock
 
 #define BACKGROUND_BLOCKS 1792
 #define SPRITE_BLOCKS 2048
+#define MAP_BLOCKS 256
+
+// Amount of 2k chunks available for maps
+// One 32x32 map chunk needs 2k VRAM space
+// A full 64x64 map requires 8k VRAM space
+#define MAP_CHUNKS_16K 8
+#define MAP_CHUNKS_32K 16
+
 
 class Allocator
 {
  public:
   Allocator();
 
+  void init(Rage::BGMapMemSize mainBGSize, Rage::BGMapMemSize subBGSize);
+
   /* Returns offset into VRAM where 'size' blocks will fit. One block
-     is 64 bytes (8x8 pixels at 8 bpp). */
+     is 64 bytes (8x8 pixels at 8 bpp). Returns -1 on failure (OOM). */
   int allocateVRAM(Rage::Screen s, Rage::Type t, int size);
+
+  /* Returns 2k offset into VRAM where map will fit. Returns -1 on
+     failure (OOM). */
+  int allocateMap(Rage::Screen, Rage::BGMapSize mapSize);
+
   void addFreeBlock(Rage::Screen s, Rage::Type t, int offset, int length);
   int sumFreeBlocks(Rage::Screen s, Rage::Type t);
   int largestFreeBlock(Rage::Screen s, Rage::Type t);
   void listFreeBlocks(Rage::Screen s, Rage::Type t);
 
  private:
-  std::list<MemoryBlock> freeBlocks[2][2];
+  std::list<MemoryBlock> freeBlocks[2][3];
 };
 
 #endif

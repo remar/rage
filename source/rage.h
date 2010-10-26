@@ -351,11 +351,11 @@ class Rage
      SUB = 1   /**< The secondary DS screen. */};
 
   /** Definitions used to point out which VRAM to use. */
-  enum Type {SPRITE = 0, BG = 1};
+  enum Type {SPRITE = 0, BG = 1, MAP = 2};
 
   /** The two available choices for map memory size. */
-  enum BGMapMemSize {BG_MAPMEM_SIZE_16K, /**< 16k map memory, 112k tile memory */
-		     BG_MAPMEM_SIZE_32K  /**< 32k map memory, 96k tile memory */};
+  enum BGMapMemSize {BG_MAPMEM_SIZE_16K = 0, /**< 16k map memory, 112k tile memory */
+		     BG_MAPMEM_SIZE_32K = 1  /**< 32k map memory, 96k tile memory */};
 
   /** The various map sizes, in pixels. */
   enum BGMapSize {BG_MAP_256x256 = 0,
@@ -422,6 +422,15 @@ class Rage
       @return 0 on failure, 1 on success. */
   int setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
 		      u16 tileWidth, u16 tileHeight);
+
+  /** Releases a background, freeing up its map area.
+
+      @param s Screen to release background on.
+
+      @param layer Background layer to release.
+
+      @return 0 on failure, 1 on success. */
+  int releaseBackground(Screen s, u16 layer);
 
   /** Load a tileset into VRAM.
       
