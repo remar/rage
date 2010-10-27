@@ -8,6 +8,7 @@ struct TileSetInternal
   bool loaded;
   int offset; // offset into allocated tilemem for this tileset, in blocks
   int size; // size of this tileset in blocks (each block 64 bytes)
+  Rage::ImageDefinition imageDef;
 };
 
 struct SpriteDefinitionInternal

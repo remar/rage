@@ -539,6 +539,15 @@ class Rage
       @return 0 on failure, 1 on success. */
   int unloadSprite(Screen s, int sprite);
 
+  /** Unloads all sprites from one screen. Make sure that there are no
+      instances left of the sprites on this screen.
+
+      @param s Screen to unload all sprites from, Rage::MAIN or
+      Rage::SUB.
+
+      @return 0 on failure, 1 on success. */
+  int unloadAllSprites(Screen s);
+
   /** Create an instance of a sprite. The sprite will start the first
       animation defined in the sprite, be visible, and be located at
       0,0.

@@ -29,10 +29,13 @@
 #include "SpriteInstance.h"
 #include "ImageCache.h"
 #include "Allocator.h"
+#include "PaletteHandler.h"
 #include "internalstructures.h"
 
 Allocator allocator;
 ImageCache imageCache(&allocator);
+
+PaletteHandler paletteHandler;
 
 Rage::ErrorCode errorCode;
 
@@ -450,11 +453,12 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
       return 0;
     }
 
+  paletteHandler.mergePalettes(s, BG, &(def->image));
+
   // copy tile graphics to VRAM and palette to palette area
   if(s == MAIN)
     {
       dmaCopy(def->image.gfx, (u16*)((int)mainBGVram + offset), def->image.gfxLen);
-      dmaCopy(def->image.pal, BG_PALETTE, def->image.palLen);
     }
   else
     {
@@ -465,6 +469,7 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
   tileSets[s][def->tileSetID].loaded = true;
   tileSets[s][def->tileSetID].offset = offset >> 6; // divide by 64;
   tileSets[s][def->tileSetID].size = blocks;
+  tileSets[s][def->tileSetID].imageDef = def->image;
 
   return 1;
 }
@@ -680,6 +685,18 @@ Rage::unloadSprite(Screen s, int sprite)
   delete [] spr->animations;
 
   spr->loaded = false;
+
+  return 1;
+}
+
+int
+Rage::unloadAllSprites(Screen s)
+{
+  VALID_SCREEN_CHECK(s);
+
+  for(int sprite = 0;sprite < 128;sprite++)
+    if(spriteDefinitions[s][sprite].loaded)
+      unloadSprite(s, sprite);
 
   return 1;
 }
