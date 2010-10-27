@@ -8,7 +8,7 @@ endif
 
 GAME_ICON	:=	$(PWD)/icon.bmp
 GAME_SUBTITLE1	:=	Remar's Abstract Graphics Engine
-GAME_SUBTITLE2	:=	Background functions
+GAME_SUBTITLE2	:=	Background scrolling
 
 include $(DEVKITARM)/ds_rules
 
