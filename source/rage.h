@@ -459,6 +459,8 @@ class Rage
       @return 0 on failure, 1 on success. */
   int unloadAllTileSets(Screen s);
 
+  int setBackgroundScroll(Screen s, u16 layer, int x, int y);
+
   /** Set a tile in the abstract tilemap.
 
       @param s Screen to set tile on, Rage::MAIN or Rage::SUB. 

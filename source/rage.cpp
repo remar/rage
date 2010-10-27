@@ -166,19 +166,45 @@ int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
 
   int mapx, mapy;
 
+  int mapWidth = mapSizeToWidth(tileMap[s][layer].mapSize);
+  int mapHeight = mapSizeToHeight(tileMap[s][layer].mapSize);
+
+  int mapOffset;
+
+  int mapOffsetY = tileMap[s][layer].mapOffsetY;
+
+  // TODO: Could calculate mapOffset in advance if tile doesn't cross
+  // chunk borders
+
   for(int yi = 0;yi < tileHeight;yi++)
     {
       for(int xi = 0;xi < tileWidth;xi++)
 	{
+	  mapOffset = 0;
+
 	  mapx = x*tileWidth+xi;
-	  if(mapx > 31) // edge reached, next line
+	  if(mapx > mapWidth - 1) // edge reached, next line
 	    break;
 
 	  mapy = y*tileHeight+yi;
-	  if(mapy > 23) // edge reached, tile done
+	  if(mapy > mapHeight - 1) // edge reached, tile done
 	    break;
 
-	  mapPtr[mapx+mapy*32]
+	  if(mapx > 31)
+	    {
+	      mapOffset = 32 * 32;
+
+	      mapx -= 32;
+	    }
+
+	  if(mapy > 31)
+	    {
+	      mapOffset += mapOffsetY;
+
+	      mapy -= 32;
+	    }
+
+	  mapPtr[mapx+mapy*tileMap[s][layer].mapWidth + mapOffset]
 	    = tile*tileWidth*tileHeight + xi + yi*tileWidth 
 	    + tileSets[s][tileSet].offset;
 	}
@@ -235,8 +261,6 @@ Rage::init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
 
   mapMemSize[MAIN] = mainBGSize;
   mapMemSize[SUB] = subBGSize;
-
-  consoleDemoInit();
 
   // Tell allocator how much memory is available for background
   // graphics
@@ -340,6 +364,10 @@ Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize,
   tileMap[s][layer].tileHeight = tileHeight;
   tileMap[s][layer].mapWidth = (mapWidth / tileWidth) + !!(mapWidth % tileWidth);
   tileMap[s][layer].mapHeight = (mapHeight / tileHeight) + !!(mapHeight % tileHeight);
+
+  tileMap[s][layer].mapOffsetY = 32 * 32;
+  if(bgMapSize == BG_MAP_512x512)
+    tileMap[s][layer].mapOffsetY += 32 * 32;
 
   int offset = allocator.allocateMap(s, bgMapSize);
 
@@ -471,6 +499,19 @@ Rage::unloadAllTileSets(Screen s)
   for(int i = 0;i < MAX_TILESETS;i++)
     if(tileSets[s][i].loaded)
       unloadTileSet(s, i);
+
+  return 1;
+}
+
+int
+Rage::setBackgroundScroll(Screen s, u16 layer, int x, int y)
+{
+  VALID_SCREEN_CHECK(s);
+  VALID_LAYER_CHECK(s);
+
+  bgSetScroll(tileMap[s][layer].bgID, x, y);
+
+  bgNeedsUpdate = true;
 
   return 1;
 }

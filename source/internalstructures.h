@@ -34,6 +34,8 @@ struct TileMap
 
   // 2k offset into VRAM where the map is located
   int offset;
+
+  int mapOffsetY;
 };
 
 #endif
