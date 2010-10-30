@@ -13,9 +13,9 @@ int main(void)
 {
   srand(time(0));
 
-  rage.init();
+  rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K);
 
-  rage.setupBackground(Rage::MAIN, 0, 16, 16);
+  rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 16, 16);
 
 #include "metroiddef.h"
 

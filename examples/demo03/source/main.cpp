@@ -13,17 +13,17 @@
 
 Rage rage;
 
-void displayError()
+void displayError(int line)
 {
   consoleDemoInit();
 
   printf("ERROR\n--------------------------------\n"
-	 "%s\n", rage.getErrorString());
+	 "%d: %s\n", line, rage.getErrorString());
 
   while(1){}
 }
 
-#define TRY(x) {if(RAGE_FAILED(x)) displayError();}
+#define TRY(x) {if(RAGE_FAILED(x)) displayError(__LINE__);}
 
 void loadGfx()
 {
@@ -44,15 +44,15 @@ CaptainGood *cpnGood[24];
 
 void init()
 {
-  TRY(rage.init());
-  TRY(rage.setupBackground(Rage::MAIN, 0, 24, 24));
-  TRY(rage.setupBackground(Rage::SUB, 0, 24, 24));
+  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K));
+  TRY(rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 24, 24));
+  TRY(rage.setupBackground(Rage::SUB, 0, Rage::BG_MAP_256x256, 24, 24));
 
   loadGfx();
 
   // use setMap to display a background on both screens
-  Rage::Tile map[11*8];
-  for(int i = 0;i < 11*8;i++)
+  Rage::Tile map[11*11];
+  for(int i = 0;i < 11*11;i++)
       {
 	map[i].tileSet = BONUS_TILESET;
 	map[i].tile = 0;

@@ -32,6 +32,12 @@
 #include "PaletteHandler.h"
 #include "internalstructures.h"
 
+// 128k image buffer used when copying images from RAM to VRAM. While
+// image is in this buffer, it is modified to point to the merged
+// palette.
+#define BUFFER_SIZE 128 * 1024
+u8 imageBuffer[BUFFER_SIZE];
+
 Allocator allocator;
 ImageCache imageCache(&allocator);
 
@@ -87,8 +93,8 @@ int freeSpriteInstance[2];
 bool outOfSpriteIndices[2];
 int spriteInstancesLeft[2];
 
-u16 *mainBGVram;
-u16 *subBGVram;
+int mainBGVram;
+int subBGVram;
 
 void locateNextSpriteIndex(Rage::Screen s)
 {
@@ -266,11 +272,11 @@ Rage::init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
   mapMemSize[SUB] = subBGSize;
 
   // Tell allocator how much memory is available for background
-  // graphics
+  // maps
   allocator.init(mainBGSize, subBGSize);
 
-  mainBGVram = (mainBGSize == BG_MAPMEM_SIZE_16K ? (u16*)(0x06004000) : (u16*)(0x06008000));
-  subBGVram = (subBGSize == BG_MAPMEM_SIZE_16K ? (u16*)(0x06204000) : (u16*)(0x06204000));
+  mainBGVram = (mainBGSize == BG_MAPMEM_SIZE_16K ? 0x06004000 : 0x06008000);
+  subBGVram = (subBGSize == BG_MAPMEM_SIZE_16K ? 0x06204000 : 0x06208000);
 
   return 1;
 }
@@ -453,17 +459,40 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
       return 0;
     }
 
-  paletteHandler.mergePalettes(s, BG, &(def->image));
+  u16 *transTable;
+  int transTableLen;
+
+  paletteHandler.mergePalette(s, BG, &(def->image), &transTable, &transTableLen);
+
+  int bgVram = s == MAIN ? mainBGVram : subBGVram;
 
   // copy tile graphics to VRAM and palette to palette area
-  if(s == MAIN)
+
+  u8 *imageData = (u8*)def->image.gfx;
+
+  int dataCopied = 0;
+
+  // Loop through image data, copying & modifying entries as we go
+  // along. When the first chunk is done, dmaCopy it to VRAM and
+  // continue.
+  if(transTableLen == 0)
     {
-      dmaCopy(def->image.gfx, (u16*)((int)mainBGVram + offset), def->image.gfxLen);
+      // Just copy gfx to VRAM, no translation necessary
+      dmaCopy(def->image.gfx, (u16*)(bgVram + offset), def->image.gfxLen);
     }
   else
     {
-      dmaCopy(def->image.gfx, (u16*)((int)subBGVram + offset), def->image.gfxLen);
-      dmaCopy(def->image.pal, BG_PALETTE_SUB, def->image.palLen);
+      while(dataCopied < def->image.gfxLen)
+	{
+	  int i;
+	  for(i = dataCopied;i < dataCopied + BUFFER_SIZE && i < def->image.gfxLen;i++)
+	    {
+	      imageBuffer[i - dataCopied] = transTable[imageData[i]];
+	    }
+	  dmaCopy(imageBuffer, (u16*)(bgVram + offset + dataCopied), i);
+	  dataCopied += i;
+	  printf("Copied %d bytes\n", dataCopied);
+	}
     }
 
   tileSets[s][def->tileSetID].loaded = true;

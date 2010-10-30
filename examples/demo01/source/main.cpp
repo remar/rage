@@ -29,7 +29,7 @@ int main(void)
 
   TRY(rage.setupBackground(Rage::MAIN, /* screen, Rage::MAIN or Rage::SUB */
 			   0  /* layer, 0-3, 0 in front, 3 in back */,
-			   Rage::BG_MAP_256x256,
+			   Rage::BG_MAP_256x256, /* map size, in pixels */
 			   32 /* tile width, must be divisible by 8 */,
 			   32 /* tile height, must be divisible by 8 */));
 

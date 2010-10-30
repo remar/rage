@@ -27,13 +27,14 @@ void displayError()
 
 int main(void)
 {
-  TRY(rage.init()); // setup default VRAM mappings and screen modes
+  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K)); // setup default VRAM mappings and screen modes
 
   TRY(rage.setupBackground(Rage::MAIN, /* screen, Rage::MAIN or Rage::SUB */
 			   0  /* layer, 0-3, 0 in front, 3 in back */,
+			   Rage::BG_MAP_256x256, /* map size, in pixels */
 			   24 /* tile width, must be divisible by 8 */,
 			   24 /* tile height, must be divisible by 8 */));
-  TRY(rage.setupBackground(Rage::SUB, 0, 24, 24));
+  TRY(rage.setupBackground(Rage::SUB, 0, Rage::BG_MAP_256x256, 24, 24));
 
 #include "bonusdef.h" // define bonusDef, 24x24 tileset
 
@@ -42,8 +43,8 @@ int main(void)
   TRY(rage.loadTileSet(Rage::SUB, &bonusDef));
 
   // use setMap to display a background on the main screen
-  Rage::Tile map[11*8];
-  for(int i = 0;i < 11*8;i++)
+  Rage::Tile map[11*11];
+  for(int i = 0;i < 11*11;i++)
       {
 	map[i].tileSet = BONUS_TILESET;
 	map[i].tile = 0;
@@ -53,8 +54,8 @@ int main(void)
 		  map        /* Tile array of correct size */));
 
   // use the other setMap to display a background on the sub screen
-  u16 map2[11*8];
-  for(int i = 0;i < 11*8;i++)
+  u16 map2[11*11];
+  for(int i = 0;i < 11*11;i++)
     map2[i] = 0;
   TRY(rage.setMap(Rage::SUB, 0, BONUS_TILESET, map2));
 

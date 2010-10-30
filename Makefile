@@ -107,7 +107,7 @@ else
 endif
 
 
-EXAMPLES = examples/demo01 examples/demo02 examples/demo03 examples/demo04
+EXAMPLES = examples/demo01 examples/demo02 examples/demo03 examples/demo04 examples/demo05
 .PHONY: $(BUILD) clean doc install $(EXAMPLES)
 
 #---------------------------------------------------------------------------------
