@@ -1,7 +1,7 @@
 /*
   RAGE demo 05
 
-  DEBUG
+  Example of background functions, scrolling and tile set unloading.
 */
 
 #include "rage.h"
@@ -12,16 +12,17 @@
 
 Rage rage;
 
-void displayError()
+void displayError(int line)
 {
   consoleDemoInit();
 
-  printf("[Rage] %s\n", rage.getErrorString());
+  printf("ERROR %d\n--------------------------------\n"
+	 "Line %d: %s\n", rage.getErrorCode(), line, rage.getErrorString());
 
   while(1){}
 }
 
-#define TRY(x) {if(RAGE_FAILED(x)) displayError();}
+#define TRY(x) {if(RAGE_FAILED(x)) displayError(__LINE__);}
 
 int main(void)
 {
@@ -43,11 +44,15 @@ int main(void)
 
 #include "blockdef.h"
   TRY(rage.loadTileSet(Rage::MAIN, &blockDef));
+  TRY(rage.unloadTileSet(Rage::MAIN, BLOCK_TILESET));
+  TRY(rage.loadTileSet(Rage::MAIN, &blockDef));
 #ifndef DEBUG_ME
   TRY(rage.loadTileSet(Rage::SUB, &blockDef));
 #endif
 
 #include "metroiddef.h"
+  TRY(rage.loadTileSet(Rage::MAIN, &metroidDef));
+  TRY(rage.unloadTileSet(Rage::MAIN, METROID_TILESET));
   TRY(rage.loadTileSet(Rage::MAIN, &metroidDef));
 #ifndef DEBUG_ME
   TRY(rage.loadTileSet(Rage::SUB, &metroidDef));
