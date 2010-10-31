@@ -1,0 +1,20 @@
+# Include palette
+-p
+
+# Include gfx data
+-g
+
+# Gfx data type
+-gu16
+
+# 8bpp
+-gB8
+
+# Exclude map data
+-m!
+
+# Metatile height (tiles are 8x16 pixels)
+-Mh2
+
+# Metatile width (tiles are 8x16 pixels)
+-Mw1
