@@ -39,9 +39,8 @@
 u8 imageBuffer[BUFFER_SIZE];
 
 Allocator allocator;
-ImageCache imageCache(&allocator);
-
 PaletteHandler paletteHandler;
+ImageCache imageCache(&allocator, &paletteHandler, imageBuffer);
 
 Rage::ErrorCode errorCode;
 
@@ -70,6 +69,8 @@ u16 tileMapInternal[64*64];
 #define SPRITE_LOADED_CHECK(x) {if(spriteInstances[s][SPRITE_INDEX(x)].loaded \
 				   == false) \
       {errorCode = BAD_SPRITE_INDEX; return 0;}}
+#define TILEMAP_LOADED_CHECK(s,layer) {if(tileMap[s][layer].loaded == false) \
+      {errorCode = TILEMAP_NOT_INITIALIZED; return 0;}}
 
 bool bgNeedsUpdate;
 
@@ -213,7 +214,7 @@ int setTileInternal(Rage::Screen s, u16 layer, u16 x, u16 y,
 	      mapy -= 32;
 	    }
 
-	  mapPtr[mapx+mapy*tileMap[s][layer].mapWidth + mapOffset]
+	  mapPtr[mapx+mapy*32 + mapOffset]
 	    = tile*tileWidth*tileHeight + xi + yi*tileWidth 
 	    + tileSets[s][tileSet].offset;
 	}
@@ -462,19 +463,16 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
   u16 *transTable;
   int transTableLen;
 
-  paletteHandler.mergePalette(s, BG, &(def->image), &transTable, &transTableLen);
+  int retval = 1;
+  if(!paletteHandler.mergePalette(s, BG, &(def->image), &transTable, &transTableLen))
+    {
+      // Soft error, still copy image data to VRAM
+      errorCode = FAILED_PALETTE_MERGE;
+      retval = 0;
+    }
 
   int bgVram = s == MAIN ? mainBGVram : subBGVram;
 
-  // copy tile graphics to VRAM and palette to palette area
-
-  u8 *imageData = (u8*)def->image.gfx;
-
-  int dataCopied = 0;
-
-  // Loop through image data, copying & modifying entries as we go
-  // along. When the first chunk is done, dmaCopy it to VRAM and
-  // continue.
   if(transTableLen == 0)
     {
       // Just copy gfx to VRAM, no translation necessary
@@ -482,17 +480,18 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
     }
   else
     {
-      while(dataCopied < def->image.gfxLen)
+      // Loop through image data, copying & modifying entries as we go
+      // along.
+      u8 *imageData = (u8*)def->image.gfx;
+
+      int i;
+      for(i = 0;i < BUFFER_SIZE && i < def->image.gfxLen;i++)
 	{
-	  int i;
-	  for(i = dataCopied;i < dataCopied + BUFFER_SIZE && i < def->image.gfxLen;i++)
-	    {
-	      imageBuffer[i - dataCopied] = transTable[imageData[i]];
-	    }
-	  dmaCopy(imageBuffer, (u16*)(bgVram + offset + dataCopied), i);
-	  dataCopied += i;
-	  printf("Copied %d bytes\n", dataCopied);
+	  imageBuffer[i] = transTable[imageData[i]];
 	}
+
+      DC_FlushRange(imageBuffer, i);
+      dmaCopy(imageBuffer, (u16*)(bgVram + offset), i);
     }
 
   tileSets[s][def->tileSetID].loaded = true;
@@ -500,7 +499,7 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
   tileSets[s][def->tileSetID].size = blocks;
   tileSets[s][def->tileSetID].imageDef = def->image;
 
-  return 1;
+  return retval;
 }
 
 int
@@ -515,6 +514,14 @@ Rage::unloadTileSet(Screen s, u16 tileSet)
       return 0;
     }
 
+  int retval = 1;
+
+  if(!paletteHandler.unmergePalette(s, BG, &(tileSets[s][tileSet].imageDef)))
+    {
+      errorCode = FAILED_PALETTE_UNMERGE;
+      retval = 0;
+    }
+
   tileSets[s][tileSet].loaded = false;
 
   // deallocate VRAM
@@ -522,7 +529,7 @@ Rage::unloadTileSet(Screen s, u16 tileSet)
 			 tileSets[s][tileSet].offset,
 			 tileSets[s][tileSet].size);
 
-  return 1;
+  return retval;
 }
 
 int
@@ -542,6 +549,7 @@ Rage::setBackgroundScroll(Screen s, u16 layer, int x, int y)
 {
   VALID_SCREEN_CHECK(s);
   VALID_LAYER_CHECK(s);
+  TILEMAP_LOADED_CHECK(s, layer);
 
   bgSetScroll(tileMap[s][layer].bgID, x, y);
 
@@ -606,8 +614,9 @@ Rage::setMap(Screen s, u16 layer, u16 tileSet, u16 *map)
       }
 
   DC_FlushAll(); // make sure that the modifications are flushed to main ram
+  int size = 2 * mapSizeToWidth(tileMap[s][layer].mapSize) * mapSizeToHeight(tileMap[s][layer].mapSize);
   dmaCopy(tileMapInternal, bgGetMapPtr(tileMap[s][layer].bgID),
-	  sizeof(tileMapInternal));
+	  size);
 
   return 1;
 }
@@ -906,7 +915,10 @@ Rage::getErrorString()
       "No such sprite loaded",
       "Bad animation ID",
       "Bad map size",
-      "Out of map memory"
+      "Out of map memory",
+      "Failed palette merge",
+      "Failed palette unmerge",
+      "Tilemap not initialized"
     };
 
   if(errorCode < NO_ERROR || errorCode >= LAST_ERROR_CODE)

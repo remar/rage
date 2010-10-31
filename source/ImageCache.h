@@ -27,17 +27,20 @@
 #include <nds.h>
 #include "rage.h"
 #include "Allocator.h"
+#include "PaletteHandler.h"
 
 class ImageCache
 {
  public:
-  ImageCache(Allocator *allocator);
+  ImageCache(Allocator *allocator, PaletteHandler *paletteHandler, u8 *imageBuffer);
   u16 **get(Rage::Screen s, Rage::ImageDefinition *imageDef,
 	    SpriteSize frameSize);
   void unload(Rage::Screen s, Rage::ImageDefinition *imageDef);
 
  private:
   Allocator *allocator;
+  PaletteHandler *paletteHandler;
+  u8 *imageBuffer;
 };
 
 #endif

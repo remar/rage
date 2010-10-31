@@ -1,4 +1,5 @@
 #include "PaletteHandler.h"
+#include <stdio.h>
 
 u16 mergedPal[256];
 
@@ -8,16 +9,12 @@ u16 trans[256];
 PaletteHandler::PaletteHandler()
 {
   for(int i = 0;i < 256;i++)
-    {
-      palette[Rage::MAIN][Rage::SPRITE][i] = 0;
-      palette[Rage::SUB][Rage::SPRITE][i] = 0;
-      palette[Rage::MAIN][Rage::BG][i] = 0;
-      palette[Rage::SUB][Rage::BG][i] = 0;
-      paletteCount[Rage::MAIN][Rage::SPRITE][i] = 0;
-      paletteCount[Rage::SUB][Rage::SPRITE][i] = 0;
-      paletteCount[Rage::MAIN][Rage::BG][i] = 0;
-      paletteCount[Rage::SUB][Rage::BG][i] = 0;
-    }
+    for(int j = 0;j < 2;j++)
+      for(int k = 0;k < 2;k++)
+	{
+	  palette[j][k][i] = 0;
+	  paletteCount[j][k][i] = 0;
+	}
 }
 
 struct MergeEntry
@@ -31,19 +28,6 @@ PaletteHandler::mergePalette(Rage::Screen s, Rage::Type type,
 			     Rage::ImageDefinition *imageDefinition,
 			     u16 **transTable, int *transTableLen)
 {
-  // TODO! Uh oh, can't merge the same image several times (i.e. on
-  // both screens) because the image has been modified!! Maybe save
-  // modified palette here? Save it in the form (index, color) to make
-  // it possible to remerge palette. OR don't modify the image, copy
-  // it through an intermediate buffer that is modified
-  // instead. Should work for tiles at least. Might be too slow for
-  // animations that change often.
-
-  // Thoughts:
-  // palettes is a map from 'pointer to ImageDefinition' to 'modified palette'
-  // palettes[imageDefinition] = <the modified palette>
-  // if(palettes[imagesDefinition]) ...
-
   // If first entry in existing palettes is empty, just copy the
   // images palette into the empty palette.
   if(paletteCount[s][type][0] == 0)
@@ -55,7 +39,23 @@ PaletteHandler::mergePalette(Rage::Screen s, Rage::Type type,
 	  // Locate the end of the palette. Color 0 (all black)
 	  // indicates the end if we're at index 2 or later.
 	  if(imageDefinition->pal[i] == 0 && i > 1)
-	    return 1;
+	    {
+	      SavedPalette *saved = new SavedPalette();
+	      saved->length = i-1;
+	      saved->data = new u16[saved->length];
+	      
+	      for(int j = 0;j < saved->length;j++)
+		{
+		  saved->data[j] = j+1; // Straight copy of images
+					// palette into combined palette
+		}
+	      savedPalettes[s][type][(short unsigned int *)imageDefinition->gfx] = saved;
+
+	      // copy palette to hardware
+	      copyPalette(s, type);
+
+	      return 1;
+	    }
 
 	  palette[s][type][i] = imageDefinition->pal[i];
 	  paletteCount[s][type][i]++;
@@ -82,6 +82,9 @@ PaletteHandler::mergePalette(Rage::Screen s, Rage::Type type,
 	break;
     }
 
+  // Nullify translation table
+  dmaFillWords(0, trans, 512);
+
   // Go through the provided palette to see if any of the colors is
   // already found in the existing palette.
   for(int i = 0;i < 256;i++)
@@ -96,6 +99,10 @@ PaletteHandler::mergePalette(Rage::Screen s, Rage::Type type,
 	    paletteEntryMatched[j] = true;
 	  }
     }
+
+  // Add 1 to index 0 (the transparent color, not added in loop
+  // above).
+  palCount[0]++;
 
   // Build palette to append to existing palette
   MergeEntry paletteToMerge[256];
@@ -132,26 +139,63 @@ PaletteHandler::mergePalette(Rage::Screen s, Rage::Type type,
       else if(i == 255)
 	{
 	  // TODO: Palette full! Warn user somehow.
+
+
 	  return 0;
 	}
     }
 
-  // Modify image to point to the merged palette
-
-  // // TODO: This will be performed by the user of this method instead.
-  // u8 *data = (u8*)imageDefinition->gfx;
-  // for(int i = 0;i < imageDefinition->gfxLen;i++)
-  //   {
-  //     data[i] = trans[data[i]];
-  //   }
-
+  // "return" translation table
   *transTable = trans;
   *transTableLen = palEntries;
 
-  if(s == Rage::MAIN && type == Rage::BG)
-    dmaCopy(pal, BG_PALETTE, 512);
-  if(s == Rage::SUB && type == Rage::BG)
-    dmaCopy(pal, BG_PALETTE_SUB, 512);
+  // copy palette to hardware
+  copyPalette(s, type);
+
+  // Generate "saved palette", used when unmerging palette
+  SavedPalette *saved = new SavedPalette();
+  saved->length = palEntries - 1;
+  saved->data = new u16[saved->length];
+
+  for(int i = 0;i < saved->length;i++)
+    {
+      saved->data[i] = trans[i+1];
+    }
+  savedPalettes[s][type][(short unsigned int *)imageDefinition->gfx] = saved;
+
+  saved = savedPalettes[s][type][(short unsigned int *)imageDefinition->gfx];
 
   return 1;
+}
+
+int
+PaletteHandler::unmergePalette(Rage::Screen s, Rage::Type type,
+			       Rage::ImageDefinition *imageDefinition)
+{
+  SavedPalette *saved = savedPalettes[s][type][(short unsigned int *)imageDefinition->gfx];
+
+  if(saved == 0)
+    return 0;
+
+  paletteCount[s][type][0]--; // All images first index is
+			      // transparent, so it's a special case
+  for(int i = 0;i < saved->length;i++)
+    {
+      paletteCount[s][type][saved->data[i]]--;
+    }
+
+  savedPalettes[s][type].erase((short unsigned int *)imageDefinition->gfx);
+  delete saved;
+
+  return 1;
+}
+
+void
+PaletteHandler::copyPalette(Rage::Screen s, Rage::Type type)
+{
+  void *palAdress[] = {SPRITE_PALETTE, SPRITE_PALETTE_SUB, BG_PALETTE, BG_PALETTE_SUB};
+
+  DC_FlushRange(palette[s][type], 512);
+
+  dmaCopy(palette[s][type], palAdress[s + type * 2], 512);
 }

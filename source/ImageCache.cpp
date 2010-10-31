@@ -36,74 +36,10 @@ struct CacheEntry
 
 std::map<const u16*,CacheEntry *> cache[2];
 
-ImageCache::ImageCache(Allocator *allocator)
-  : allocator(allocator)
+ImageCache::ImageCache(Allocator *allocator, PaletteHandler *paletteHandler, u8 *imageBuffer)
+  : allocator(allocator), paletteHandler(paletteHandler), imageBuffer(imageBuffer)
 {
   
-}
-
-int getFrameWidth(SpriteSize frameSize)
-{
-  switch(frameSize)
-    {
-      case SpriteSize_8x8:
-      case SpriteSize_8x16:
-      case SpriteSize_8x32:
-      return 8;
-      break;
-
-      case SpriteSize_16x8:
-      case SpriteSize_16x16:
-      case SpriteSize_16x32:
-      return 16;
-      break;
-
-      case SpriteSize_32x8:
-      case SpriteSize_32x16:
-      case SpriteSize_32x32:
-      case SpriteSize_32x64:
-      return 32;
-      break;
-
-      case SpriteSize_64x32:
-      case SpriteSize_64x64:
-      return 64;
-      break;
-    }
-
-  return 0; /* Should never happen */
-}
-
-int getFrameHeight(SpriteSize frameSize)
-{
-  switch(frameSize)
-    {
-      case SpriteSize_8x8:
-      case SpriteSize_16x8:
-      case SpriteSize_32x8:
-      return 8;
-      break;
-
-      case SpriteSize_8x16:
-      case SpriteSize_16x16:
-      case SpriteSize_32x16:
-      return 16;
-      break;
-
-      case SpriteSize_8x32:
-      case SpriteSize_16x32:
-      case SpriteSize_32x32:
-      case SpriteSize_64x32:
-      return 32;
-      break;
-
-      case SpriteSize_32x64:
-      case SpriteSize_64x64:
-      return 64;
-      break;
-    }
-
-  return 0; /* Should never happen */
 }
 
 u16 **
@@ -119,7 +55,7 @@ ImageCache::get(Rage::Screen s, Rage::ImageDefinition *imageDef,
       return entry->frames;
     }
 
-  int size = getFrameWidth(frameSize) * getFrameHeight(frameSize);
+  int size = SPRITE_SIZE_PIXELS(frameSize);
   int frameCount = imageDef->gfxLen / size;
 
   u16 **frames = new u16*[frameCount];
@@ -128,7 +64,12 @@ ImageCache::get(Rage::Screen s, Rage::ImageDefinition *imageDef,
   OamState *oam;
   oam = s == Rage::MAIN ? &oamMain : &oamSub;
 
-  const u16 *gfx = imageDef->gfx;
+  const u8 *gfx = (u8*)imageDef->gfx;
+
+  u16 *transTable;
+  int transTableLen;
+
+  paletteHandler->mergePalette(s, Rage::SPRITE, imageDef, &transTable, &transTableLen);
 
   u16 *screenOffset = (s == Rage::MAIN ? (u16*)0x06400000 : (u16*)0x06600000);
 
@@ -137,14 +78,24 @@ ImageCache::get(Rage::Screen s, Rage::ImageDefinition *imageDef,
       vramOffsets[i] = allocator->allocateVRAM(s, Rage::SPRITE, size >> 6)>>6;
       frames[i] = (vramOffsets[i]<<6) + screenOffset;
 
-      dmaCopy(gfx, frames[i], size);
+      if(transTableLen)
+	{
+	  // Modify image here, to point to the merged palette
+	  for(int j = 0;j < size;j++)
+	    {
+	      imageBuffer[j] = transTable[gfx[j]];
+	    }
+	  DC_FlushRange(imageBuffer, size);
+	  dmaCopy(imageBuffer, frames[i], size);
+	}
+      else
+	{
+	  // No modification necessary, just copy original image
+	  dmaCopy(gfx, frames[i], size);
+	}
 
-      gfx += size >> 1; // gfx is a u16, hence the divide by 2 (>> 1)
+      gfx += size;
     }
-
-  void *pal = s == Rage::MAIN ? SPRITE_PALETTE : SPRITE_PALETTE_SUB;
-
-  dmaCopy(imageDef->pal, pal, imageDef->palLen);
 
   entry = new CacheEntry;
   entry->frameCount = frameCount;
@@ -168,9 +119,6 @@ ImageCache::unload(Rage::Screen s, Rage::ImageDefinition *imageDef)
     {
       if(--entry->refCount == 0)
 	{
-	  OamState *oam;
-	  oam = s == Rage::MAIN ? &oamMain : &oamSub;
-
 	  for(int i = 0;i < entry->frameCount;i++)
 	    {
 	      allocator->addFreeBlock(s, Rage::SPRITE, entry->vramOffsets[i],
@@ -181,6 +129,8 @@ ImageCache::unload(Rage::Screen s, Rage::ImageDefinition *imageDef)
 	  delete entry;
 
 	  cache[s][imageDef->gfx] = 0;
+
+	  paletteHandler->unmergePalette(s, Rage::SPRITE, imageDef);
 	}
     }
 }
