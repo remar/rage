@@ -56,7 +56,7 @@
    tilemap for a layer. You do this with a call to
    Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize, u16
    tileWidth, u16 tileHeight).  Screen can be one of Rage::MAIN and
-   Rage::SUB, layer is a number between 0 and 3, bgMapSize is on of
+   Rage::SUB, layer is a number between 0 and 3, bgMapSize is one of
    Rage::BG_MAP_256x256, Rage::BG_MAP_512x256, Rage::BG_MAP_256x512,
    or Rage::BG_MAP_512x512, and tileWidth and tileHeight are numbers
    divisible by 8 (8, 16, 24, 32, and so on).
@@ -398,7 +398,8 @@ class Rage
       background maps for the sub screen.
       
       @return 0 on failure, 1 on success. */
-  int init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize);
+  int init(BGMapMemSize mainBGSize = BG_MAPMEM_SIZE_16K,
+	   BGMapMemSize subBGSize = BG_MAPMEM_SIZE_16K);
 
   /** Returns the error code, use after a method indicates an
       error. 
@@ -517,15 +518,23 @@ class Rage
   int setTile(Screen s, u16 layer, u16 x, u16 y, u16 tileSet, u16 tile);
 
   /** Set all the tiles in one go. The tilemap provided must have the
-      correct dimension, so if you have 16x16 tiles, the tilemap will
-      have size 16*12. In general, to calculate the size of the
-      tilemap you can use this formula:
-      (32/(tileWidth/8))*(24/(tileHeight/8)). If the tiles doesn't fit
-      perfectly into the 32*24 map, then the tiles will be clipped at
-      the edges, so these tiles must also be provided. E.g. if you use
-      24*24 pixel tiles, the rightmost tiles will only show
-      2/3rds. You must still provide these tiles, so the tilemap will
-      be 11*8. 
+      correct dimension, and must match the size you've chosen for the
+      map.
+
+      If you've chosen a 256x256 pixel map, with 16x16 pixel tiles,
+      you can fit 16 tiles in a row and 16 tiles in a column, so the
+      correct dimension for the map is 16*16. If you've selected a
+      512x256 pixel map, with 32x32 pixel tiles, you will fit 512/32 =
+      16 tiles in a row and 256/32 = 8 tiles in a column, so the
+      correct dimension will be 16*8.
+
+      In general, to find out the correct dimensions, you can use this
+      simple formula: map size = roof(mapWidth/tileWidth) *
+      roof(mapHeight/tileHeight). roof(x) means round up, so
+      roof(256/24) = 11. Example: background is set up as a 512x512
+      pixel map with 32x24 pixel tiles. The correct dimensions for the
+      map will be: roof(512/32) * roof(512/24) = 16 * 22 = 352
+      entries.
 
       @param s Screen to set map on, Rage::MAIN or Rage::SUB.
 
