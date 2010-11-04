@@ -203,7 +203,7 @@ void
 Allocator::listFreeBlocks(Rage::Screen s, Rage::Type t)
 {
   const char *engine_string[] = {"MAIN", "SUB "};
-  const char *type_string[] = {"SPR", "BG "};
+  const char *type_string[] = {"SPR", "BG ", "MAP"};
 
   printf("%s %s --------------------\n",
 	 engine_string[(int)s], type_string[(int)t]);
@@ -219,5 +219,5 @@ Allocator::listFreeBlocks(Rage::Screen s, Rage::Type t)
       totalFree += length;
     }
   
-  printf("total free %d, %d kB\n", totalFree, totalFree * 64 / 1024);
+  printf("total free %d, %d kB\n", totalFree, t == Rage::MAP ? totalFree * 2 : totalFree / 16);
 }
