@@ -39,7 +39,7 @@ Sprite sprite[2][128];
 int main(void)
 {
   // setup default VRAM mappings and screen modes
-  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K));
+  TRY(rage.init());
 
   srand(time(0));
 
