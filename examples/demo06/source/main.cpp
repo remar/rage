@@ -1,7 +1,8 @@
 /*
   RAGE demo 06
 
-  Sprite example, merging palettes automatically.
+  Sprite example, merging palettes automatically. Look at them
+  bouncing sprites!!
 */
 
 #include "rage.h"
@@ -57,6 +58,7 @@ int main(void)
   TRY(rage.loadSprite(Rage::MAIN, &goalDef));
   TRY(rage.loadSprite(Rage::SUB, &goalDef));
 
+  // Set up sprites
   for(int s = 0;s < 2;s++)
     for(int i = 0;i < 128;i++)
       {
@@ -68,7 +70,6 @@ int main(void)
 	else
 	  sprite[s][i].id = rage.createSpriteInstance((Rage::Screen)s, COIN_SPRITE);
 
-
 	sprite[s][i].x = rand()%(255-32-17)+17;
 	sprite[s][i].y = rand()%(255-32-17)+17;
 	sprite[s][i].dx = rand()%2 ? -1 : 1;
@@ -77,6 +78,7 @@ int main(void)
 	sprite[s][i].delayCounter = sprite[s][i].delay;
       }
 
+  // Create map
   u16 map[16*16];
 
   for(int y = 1;y < 15;y++)
@@ -98,28 +100,26 @@ int main(void)
   map[0+15*16] = 6;
   map[15+15*16] = 7;
 
+  // Load in map on both screens
   TRY(rage.setMap(Rage::MAIN, 0, BLOCK_TILESET, map));
   TRY(rage.setMap(Rage::SUB, 0, BLOCK_TILESET, map));
 
   int y = 0;
   int dy = 1;
 
-  int everyThird = 0;
+#define SCROLL_DELAY 3
+  int scrollCounter = SCROLL_DELAY;
 
   while(1)
     {
-      if(everyThird == 2)
+      if(--scrollCounter == 0)
 	{
 	  y += dy;
 
-	  if(y < 0 || y > (256-192))
+	  if(y < 1 || y > (255-192))
 	    dy = -dy;
 
-	  everyThird = 0;
-	}
-      else
-	{
-	  everyThird++;
+	  scrollCounter = SCROLL_DELAY;
 	}
 
       for(int s = 0;s < 2;s++)
