@@ -27,7 +27,11 @@ echo "            Version $RAGEVERSION - binary distribution" > README-files/bin
 rm README-files/binversion
 
 mkdir -p $RAGE
-cp -r include lib examples doc README NEWS $RAGE
+cp -r include lib examples doc doc doc README NEWS $RAGE
+
+# Don't include the bug database
+rm -rf $RAGE/doc/bugbase
+
 rm README
 rm $RAGE/doc/api/Doxyfile
 cp Makefile.bindist $RAGE/Makefile

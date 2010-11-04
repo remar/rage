@@ -19,6 +19,10 @@ rm README-files/srcversion
 make clean
 mkdir -p $RAGE
 cp -r doc source examples Makefile README NEWS $RAGE
+
+# Don't include the bug database
+rm -rf $RAGE/doc/bugbase
+
 rm README
 tar cjvf $RAGE.tar.bz2 $RAGE
 zip -r $RAGE.zip $RAGE
