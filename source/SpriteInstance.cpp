@@ -33,6 +33,11 @@ SpriteInstance::SpriteInstance(SpriteDefinitionInternal *spriteDef,
   setInitialAnimation();
 }
 
+SpriteInstance::~SpriteInstance()
+{
+  imageCache->unload(screen, &spriteDefinition->animations[currentAnimation].image);
+}
+
 int
 SpriteInstance::setAnimation(u16 animationID)
 {

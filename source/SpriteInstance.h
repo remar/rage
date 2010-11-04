@@ -32,6 +32,8 @@ class SpriteInstance
  public:
   SpriteInstance(SpriteDefinitionInternal *spriteDef, ImageCache *imageCache,
 		 Rage::Screen screen, int spriteIndex);
+  ~SpriteInstance();
+
   int setAnimation(u16 animationID);
 
   /* Returns true if oam needs to be updated */
