@@ -1,3 +1,11 @@
+Release 0.2.0 - 2010-11-04 ----------------------------------------------------
+
+* Second release of Rage, with the following features:
+  . Background scrolling
+  . Different background sizes (256x256 - 512x512)
+  . Automatic palette handling
+
+
 Release 0.1.2 - 2010-10-22 ----------------------------------------------------
 
 * Bugfix for missing first frame of initial animation. Only showed up

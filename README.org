@@ -55,9 +55,9 @@
      The files for the license (LGPL) are located here, COPYING and
      COPYING.LESSER.
 **** specification
-     The functional specification for Rage version 1.
+     The functional specifications for Rage.
 *** examples
-    Contains the 4 example projects.
+    Contains the example projects.
 *** source
     The most important directory! Contains the source for Rage.
 *** www
@@ -91,10 +91,6 @@
    release.
 
    Update the NEWS file with information about the new version.
-
-   Optionally write a news entry in www/index.php.
-
-   Add an entry to the NEWS file.
 
    Commit the bump of version and the other updated files.
 
