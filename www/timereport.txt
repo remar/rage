@@ -1,6 +1,6 @@
 | L | Headline                                                     |    Time |       |
 |---+--------------------------------------------------------------+---------+-------|
-|   | *Total time*                                                 | *73:40* |       |
+|   | *Total time*                                                 | *75:51* |       |
 |---+--------------------------------------------------------------+---------+-------|
 | 1 | Plan (Rage 1)                                                |   58:34 |       |
 | 2 | DONE Write plan                                              |         |  0:20 |
@@ -20,7 +20,7 @@
 | 2 | DONE Make website for publishing work                        |         |  1:57 |
 | 2 | DONE Write tutorial                                          |         |  5:11 |
 |---+--------------------------------------------------------------+---------+-------|
-| 1 | Plan (Rage 2)                                                |   15:06 |       |
+| 1 | Plan (Rage 2)                                                |   17:17 |       |
 | 2 | DONE Make second design                                      |         |  1:53 |
 | 2 | DONE Make time estimate for implementation - Result: ~9h     |         |  0:02 |
 | 2 | DONE Implement second version of Rage                        |         | 10:29 |
@@ -30,4 +30,6 @@
 | 2 | DONE Update README file                                      |         |  0:11 |
 | 2 | DONE Update README.org file                                  |         |  0:03 |
 | 2 | DONE Automatically generate version number for README files  |         |  0:10 |
-| 2 | TODO Update website                                          |         |  0:41 |
+| 2 | DONE Update website                                          |         |  1:13 |
+| 2 | DONE Update/rewrite tutorial                                 |         |  1:10 |
+| 2 | DONE Publish work (README.org:Making a release)              |         |  0:29 |
