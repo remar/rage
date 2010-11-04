@@ -6,18 +6,6 @@ cp -r gfx *.php *.html *.css *.txt ~/public_html/rage
 [ -d ../doc/api/html ] || (cd .. && make doc)
 cp -r ../doc/api/html ~/public_html/rage/api
 
-# Functional specification, Rage version 1
-[ -f ../doc/specification/funcspec1.txt ] && \
-    cp -r ../doc/specification/funcspec1.txt ~/public_html/rage
-[ -f ../doc/specification/funcspec1.txt ] || \
-    echo Warning: Unable to find doc/specification/funcspec1.txt
-
-# Functional specification, Rage version 2
-[ -f ../doc/specification/funcspec2.txt ] && \
-    cp -r ../doc/specification/funcspec2.txt ~/public_html/rage
-[ -f ../doc/specification/funcspec2.txt ] || \
-    echo Warning: Unable to find doc/specification/funcspec2.txt
-
 mkdir -p ~/public_html/rage/files
 cp ../../releases/* ~/public_html/rage/files
 
