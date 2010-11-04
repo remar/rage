@@ -65,6 +65,7 @@
 *** Reading some graphics format (png?)
 *** Provide a console for debugging the graphics engine
 *** Provide a diagnostics screen showing memory allocation/fragmentation
+*** Being able to get information about VRAM caching
 ** Overview
    The overview is similar to the overview in version 1 of the
    specification (funcspec1.org), but I will note the differences:
@@ -120,6 +121,9 @@
      addition to the error codes in funcspec1.org.
 ***** BAD_MAP_SIZE
 ***** OUT_OF_MAP_MEMORY
+***** FAILED_PALETTE_MERGE
+***** FAILED_PALETTE_UNMERGE
+***** TILEMAP_NOT_INITIALIZED
 *** Methods
 **** int init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize)
      Setup the standard mappings and graphic modes for the two
@@ -131,7 +135,8 @@
      Set up a background, same as in Rage 1, but you must provide a
      BGMapSize as well.
 ***** Technical notes
-      Will require a simple allocator for maps.
+      Will require a simple allocator for maps. Actually uses
+      Allocator for the implementation, but with a separate method.
 **** int releaseBackground(Screen screen, int layer)
      Used to "uninitialize" a background, thus freeing up map memory
      for other layers.
@@ -156,5 +161,14 @@
      When unloading a sprite (or tileset), the palette should be
      restored to how it would be like if that sprite (or tileset) were
      never loaded.
+
+     A special note about colors: the color 0 (black) is special. If
+     you want color 0 in a tile set or a sprite, it must be located at
+     index 1 (i.e. position 2) in the palette. Index 0 is always
+     transparent, so the value here is not relevant. But color 0 is
+     used to recognize when the end of the palette is reached, so if
+     color 0 is found in any other position than index 0 or index 1,
+     it will screw up things. Will need to clarify this very much in
+     the documentation and tutorial.
 
      WARNING: This feature might require some heavy thinking! 8-)
