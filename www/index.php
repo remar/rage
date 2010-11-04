@@ -12,6 +12,18 @@ please see <a href="about.php">About Rage</a>.
 
 <table class="indent">
 
+<tr><td class="heading"><b> 2010-11-04 </b></td></tr>
+<tr><td>
+
+Rage version 0.2 is released! The new features are automatic palette
+handling and background scrolling. I've also added a new section to
+this site, "Screenshots". Can you guess what you'll find there?<br/><br/>
+
+Anyway, head over to the <a href="downloads.php">downloads</a> page
+and get Rage 0.2.0!
+
+<br/><br/></td></tr>
+
 <tr><td class="heading"><b> 2010-10-22 </b></td></tr>
 <tr><td>
 

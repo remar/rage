@@ -1,8 +1,8 @@
-| L | Headline                                                     | Time    |       |
+| L | Headline                                                     |    Time |       |
 |---+--------------------------------------------------------------+---------+-------|
-|   | *Total time*                                                 | *58:34* |       |
+|   | *Total time*                                                 | *73:40* |       |
 |---+--------------------------------------------------------------+---------+-------|
-| 1 | Plan (Rage 1)                                                | 58:34   |       |
+| 1 | Plan (Rage 1)                                                |   58:34 |       |
 | 2 | DONE Write plan                                              |         |  0:20 |
 | 2 | DONE Gather documentation about the Nintendo DS              |         |  0:41 |
 | 2 | DONE Read documentation about graphics handling              |         | 13:13 |
@@ -19,3 +19,15 @@
 | 2 | DONE Write README file                                       |         |  0:52 |
 | 2 | DONE Make website for publishing work                        |         |  1:57 |
 | 2 | DONE Write tutorial                                          |         |  5:11 |
+|---+--------------------------------------------------------------+---------+-------|
+| 1 | Plan (Rage 2)                                                |   15:06 |       |
+| 2 | DONE Make second design                                      |         |  1:53 |
+| 2 | DONE Make time estimate for implementation - Result: ~9h     |         |  0:02 |
+| 2 | DONE Implement second version of Rage                        |         | 10:29 |
+| 2 | DONE Update functional specification to match implementation |         |  0:15 |
+| 2 | DONE Document new features (doxygen)                         |         |  0:12 |
+| 2 | DONE Update documentation (doxygen)                          |         |  1:10 |
+| 2 | DONE Update README file                                      |         |  0:11 |
+| 2 | DONE Update README.org file                                  |         |  0:03 |
+| 2 | DONE Automatically generate version number for README files  |         |  0:10 |
+| 2 | TODO Update website                                          |         |  0:41 |

@@ -4,7 +4,7 @@
 
 <p>
 I'm keeping track of the time I spend while working on Rage, here's
-the current (as of 2010-07-01) summary:
+the current (as of 2010-11-04) summary:
 </p>
 
 <pre>

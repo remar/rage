@@ -7,6 +7,16 @@ Rage. Take your pick!</p>
 
 <table class="indent">
 
+<tr><td class="heading"><b> Rage version 0.2 </b></td><tr>
+
+<tr><td><a href="files/rage-0.2.0.tar.bz2">rage-0.2.0.tar.bz2</a></td></tr>
+
+<tr><td><a href="files/rage-0.2.0.zip">rage-0.2.0.zip</a></td></tr>
+
+<tr><td><a href="files/rage-src-0.2.0.tar.bz2">rage-src-0.2.0.tar.bz2</td></tr>
+
+<tr><td><a href="files/rage-src-0.2.0.zip">rage-src-0.2.0.zip<br/><br/></td></tr>
+
 <tr><td class="heading"><b> Rage version 0.1 </b></td><tr>
 
 <tr><td><a href="files/rage-0.1.2.tar.bz2">rage-0.1.2.tar.bz2</a></td></tr>
