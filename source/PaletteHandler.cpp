@@ -91,15 +91,23 @@ PaletteHandler::mergePalette(Rage::Screen s, Rage::Type type,
   u16 *pal = palette[s][type];
   int *palCount = paletteCount[s][type];
 
+  // Count palette entries. The end is either where we find two
+  // consecutive 0's (pal[i] == 0 && pal[i+1] == 0) OR when we reach
+  // the PalLen (i == PalLen).
   int palEntries = 0;
-
-  u16 *entry = (u16*)imageDefinition->pal;
+  u16 *imgPal = (u16*)imageDefinition->pal;
+  int palLen = imageDefinition->palLen / 2; // imageDefinition->palLen
+					    // is the number of bytes,
+					    // each palette entry is
+					    // two bytes
   for(int i = 0;i < 256;i++)
     {
-      palEntries++;
-      entry++;
-      if(*entry == 0 && i > 1)
+      if(i < palLen - 1 && imgPal[i] == 0 && imgPal[i+1] == 0)
 	break;
+      else if(i == palLen)
+	break;
+
+      palEntries++;
     }
 
   // Nullify translation table
