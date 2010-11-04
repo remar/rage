@@ -3,7 +3,7 @@
 #define BLOCK_TILESET 1
 
 Rage::TileSetDefinition blockDef;
-blockDef.version = 1;
+blockDef.version = 2;
 blockDef.tileSetID = BLOCK_TILESET;
 blockDef.image.gfx = blockTiles;
 blockDef.image.gfxLen = blockTilesLen;

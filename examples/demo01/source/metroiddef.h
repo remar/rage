@@ -3,7 +3,7 @@
 #define METROID_TILESET 2
 
 Rage::TileSetDefinition metroidDef;
-metroidDef.version = 1;
+metroidDef.version = 2;
 metroidDef.tileSetID = METROID_TILESET;
 metroidDef.image.gfx = metroidTiles;
 metroidDef.image.gfxLen = metroidTilesLen;

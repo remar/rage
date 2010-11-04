@@ -27,18 +27,25 @@
    \section intro Introduction
 
    This is the API documentation for Rage - Remar's Abstract Graphics
-   Engine for Nintendo DS, version 1. See rage.h for a listing of the
+   Engine for Nintendo DS, version 2. See rage.h for a listing of the
    main include file, and Rage for a listing of the Rage class with
    all the methods and the structs.
 
 
    \section init Initialization
 
-   To initialize Rage, simply call Rage::init. This will set up the
-   standard VRAM mappings, set both screens to 2D mode 0, and
-   initialize the OAM (sprite hardware) structures. The VRAM mappings
-   gives you 128k VRAM for sprites and 112k VRAM for backgrounds per
-   screen.
+   To initialize Rage, simply call Rage::init(BGMapMemSize mainBGSize,
+   BGMapMemSize subBGSize). This will set up the standard VRAM
+   mappings, set both screens to 2D mode 0, and initialize the OAM
+   (sprite hardware) structures. The VRAM mappings gives you 128k VRAM
+   for sprites and either 96k or 112k VRAM for backgrounds per
+   screen. The amount of VRAM available for backgrounds depends on how
+   much memory is allocated for maps. You can either allocate 16k or
+   32k for maps per screen. A 256x256 pixel map needs 2k memory, a
+   256x512 or 512x256 pixel map needs 4k memory, and a 512x512 pixel
+   map needs 8k memory. This means that, to be able to create 4
+   512x512 pixel maps, you must allocate 32k to maps. BGMapMemSize is
+   either BG_MAPMEM_SIZE_16K or BG_MAPMEM_SIZE_32K.
 
 
    \section background Background handling
@@ -47,10 +54,12 @@
 
    To use the background methods you must first set up an abstract
    tilemap for a layer. You do this with a call to
-   Rage::setupBackground(Screen s, u16 layer, u16 tileWidth, u16
-   tileHeight).  Screen can be one of Rage::MAIN and Rage::SUB, layer
-   is a number between 0 and 3, and tileWidth and tileHeight are
-   numbers divisible by 8 (8, 16, 24, 32, and so on).
+   Rage::setupBackground(Screen s, u16 layer, BGMapSize bgMapSize, u16
+   tileWidth, u16 tileHeight).  Screen can be one of Rage::MAIN and
+   Rage::SUB, layer is a number between 0 and 3, bgMapSize is on of
+   Rage::BG_MAP_256x256, Rage::BG_MAP_512x256, Rage::BG_MAP_256x512,
+   or Rage::BG_MAP_512x512, and tileWidth and tileHeight are numbers
+   divisible by 8 (8, 16, 24, 32, and so on).
 
    Layer 0 is in the foreground and layer 3 is in the background. This
    means that layer 0 will cover layer 3 (and 1, and 2), so you must
@@ -59,7 +68,12 @@
    transparent tiles.
 
    The colormode of backgrounds is 8 bpp, so make sure that the
-   graphics you load in is 8 bpp.
+   graphics you load in is paletted 8 bpp.
+
+   If you're done with a background and want to free up its memory,
+   you can do this with a call to Rage::releaseBackground(Screen s,
+   u16 layer). Screen is as usual Rage::MAIN or Rage::SUB, and layer
+   is between 0 and 3 (inclusive).
 
    \subsection loadingtileset Loading a tile set
 
@@ -218,8 +232,8 @@
 class Rage
 {
  public:
-  /** Current version of Rage */
-  static const int RAGE_VERSION = 1;
+  /** Current version of the Rage specification */
+  static const int RAGE_VERSION = 2;
 
   /** Fill this struct with what grit outputs in the .h file. */
   struct ImageDefinition
@@ -412,11 +426,19 @@ class Rage
       tileHeight must be divisible by 8, so valid values are 8, 16,
       24, 32, and so on.
 
+      Layer 0 is in the foreground and layer 3 is in the background. This
+      means that layer 0 will cover layer 3 (and 1, and 2), so you must
+      use transparent tiles in layers 0, 1, and 2, to be able to see
+      layer 3. Palette index 0 is transparent, use this to make
+      transparent tiles.
+
       @param s Screen to set up background on, Rage::MAIN or Rage::SUB.
 
       @param layer Which layer to set up, a value between 0 and 3.
 
-      @param bgMapSize Size of this layer.
+      @param bgMapSize Size of this layer, Rage::BG_MAP_256x256,
+      Rage::BG_MAP_512x256, Rage::BG_MAP_256x512, or
+      Rage::BG_MAP_512x512.
 
       @param tileWidth The width of a tile. Must be divisible by 8.
 
@@ -462,6 +484,19 @@ class Rage
       @return 0 on failure, 1 on success. */
   int unloadAllTileSets(Screen s);
 
+  /** Set the scroll of the selected layer.
+
+      @param s Screen where layer is located, Rage::MAIN or Rage::SUB.
+
+      @param layer Layer to scroll.
+
+      @param x The x position to set scroll to. Note that a positive
+      value moves the layer left.
+
+      @param y The y position to set scroll to. Note that a positive
+      value moves the layer up.
+
+      @return 0 on failure, 1 on success. */
   int setBackgroundScroll(Screen s, u16 layer, int x, int y);
 
   /** Set a tile in the abstract tilemap.

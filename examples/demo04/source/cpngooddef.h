@@ -16,7 +16,7 @@
 enum {WALK_LEFT, WALK_RIGHT, STAND_LEFT, STAND_RIGHT, JUMP_LEFT, JUMP_RIGHT};
 
 Rage::SpriteDefinition cpngoodDef;
-cpngoodDef.version = 1;
+cpngoodDef.version = 2;
 cpngoodDef.spriteID = GOOD_SPRITE;
 
 Rage::Animation cpngoodAnimations[6];

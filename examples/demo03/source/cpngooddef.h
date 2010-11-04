@@ -14,7 +14,7 @@
 #include "gooddefines.h"
 
 Rage::SpriteDefinition cpngoodDef;
-cpngoodDef.version = 1;
+cpngoodDef.version = 2;
 cpngoodDef.spriteID = GOOD_SPRITE;
 
 Rage::Animation cpngoodAnimations[6];

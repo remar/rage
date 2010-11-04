@@ -3,7 +3,7 @@
 #define COIN_SPRITE 3
 
 Rage::SpriteDefinition coinDef;
-coinDef.version = 1;
+coinDef.version = 2;
 coinDef.spriteID = COIN_SPRITE;
 coinDef.animationCount = 1;
 

@@ -4,7 +4,7 @@
 enum {CLOSED_GOAL, OPEN_GOAL};
 
 Rage::SpriteDefinition goalDef;
-goalDef.version = 1;
+goalDef.version = 2;
 goalDef.spriteID = GOAL_SPRITE;
 goalDef.animationCount = 2;
 

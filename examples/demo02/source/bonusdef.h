@@ -3,7 +3,7 @@
 #define BONUS_TILESET 3
 
 Rage::TileSetDefinition bonusDef;
-bonusDef.version = 1;
+bonusDef.version = 2;
 bonusDef.tileSetID = BONUS_TILESET;
 bonusDef.image.gfx = bonusblockTiles;
 bonusDef.image.gfxLen = bonusblockTilesLen;
