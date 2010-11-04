@@ -8,8 +8,13 @@ echo ------------------------------------------------------------
 
 RAGE=rage-src-$RAGEVERSION
 
+# Generate version file for source distribution
+echo "            Version $RAGEVERSION - source distribution" > README-files/srcversion
+
 # Generate README file
 (cd README-files/ && m4 README.srcdist) > README
+
+rm README-files/srcversion
 
 make clean
 mkdir -p $RAGE

@@ -18,8 +18,13 @@ rm -rf doc/api/latex
 mv doc/api/html/* doc/api
 rmdir doc/api/html
 
+# Generate version file for binary distribution
+echo "            Version $RAGEVERSION - binary distribution" > README-files/binversion
+
 # Generate README file
 (cd README-files/ && m4 README.bindist) > README
+
+rm README-files/binversion
 
 mkdir -p $RAGE
 cp -r include lib examples doc README NEWS $RAGE

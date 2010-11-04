@@ -10,3 +10,6 @@
 
    An alternative to installing Rage in libnds is to add the path to
    the Rage directory to the LIBDIRS line in the Makefile.
+
+   To upgrade Rage, simply call 'make install', it will overwrite the
+   currently installed Rage.
