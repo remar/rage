@@ -23,9 +23,10 @@ void displayError()
 
 int main(void)
 {
-  srand(time(0));
+  // setup default VRAM mappings and screen modes
+  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K));
 
-  TRY(rage.init(Rage::BG_MAPMEM_SIZE_16K, Rage::BG_MAPMEM_SIZE_16K)); // setup default VRAM mappings and screen modes
+  srand(time(0));
 
   TRY(rage.setupBackground(Rage::MAIN, /* screen, Rage::MAIN or Rage::SUB */
 			   0  /* layer, 0-3, 0 in front, 3 in back */,
