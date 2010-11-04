@@ -58,7 +58,7 @@ u16 tileMapInternal[64*64];
       {errorCode = BAD_LAYER; return 0;}}
 #define VALID_VERSION_CHECK(x) {if(x != RAGE_VERSION) \
       {errorCode = BAD_VERSION; return 0;}}
-#define VALID_TILESET_CHECK(x) {if(x >= MAX_TILESETS) \
+#define VALID_TILESET_CHECK(x) {if(x < 0 || x >= MAX_TILESETS) \
       {errorCode = Rage::BAD_TILESET_ID; return 0;}}
 #define VALID_SPRITEID_CHECK(x) {if(x >= MAX_SPRITES) \
       {errorCode = BAD_SPRITE_ID; return 0;}}
@@ -451,12 +451,6 @@ Rage::loadTileSet(Screen s, TileSetDefinition *def)
   if(offset == -1)
     {
       errorCode = OUT_OF_VRAM;
-      return 0;
-    }
-
-  if(def->tileSetID < 0 || def->tileSetID >= MAX_TILESETS)
-    {
-      errorCode = BAD_TILESET_ID;
       return 0;
     }
 
