@@ -1,0 +1,278 @@
+                              funcspec2
+                              =========
+
+Author: Andreas Remar <andreas@hikaru>
+Date: 2010-11-04 15:20:43 CET
+
+
+Table of Contents
+=================
+1 Functional specification 
+    1.1 Project 
+    1.2 Author 
+    1.3 Scenarios 
+        1.3.1 Scenario #1, Castle of Elite 
+        1.3.2 Scenario #2, Castle of Elite 
+    1.4 Current features 
+        1.4.1 Background abstraction with varying tile dimension 
+        1.4.2 Sprite handling with animations 
+    1.5 Goals 
+        1.5.1 Scrolling backgrounds (vertical, horizontal, multidir) 
+        1.5.2 Automatic palette blending 
+        1.5.3 Add a method to unload all sprites (similar to unloading all tilesets) 
+    1.6 Nongoals 
+        1.6.1 Sprite rotation and scaling 
+        1.6.2 Better control of background tiles (e.g. mirroring) 
+        1.6.3 Better control of the VRAM mappings 
+        1.6.4 Being able to choose color depth (4bpp, 8bpp, 16bpp) 
+        1.6.5 Usage of rotation and extended rotation backgrounds 
+        1.6.6 Abstraction for scrolling "views" (large maps) 
+        1.6.7 Different ways of reading in graphics (file system, included in code) 
+        1.6.8 Reading some graphics format (png?) 
+        1.6.9 Provide a console for debugging the graphics engine 
+        1.6.10 Provide a diagnostics screen showing memory allocation/fragmentation 
+        1.6.11 Being able to get information about VRAM caching 
+    1.7 Overview 
+        1.7.1 1. Initialization 
+        1.7.2 2. Background layout 
+        1.7.3 3. Continous updating 
+    1.8 Details 
+        1.8.1 Data structures 
+        1.8.2 Methods 
+        1.8.3 Internal changes 
+
+
+1 Functional specification 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1.1 Project 
+============
+   RAGE - Remar's Abstract Graphics Engine
+   Nintendo DS graphics engine with a C++ interface
+
+   This is version 2 of the specification.
+
+1.2 Author 
+===========
+   Andreas Remar, andreas.remar@gmail.com
+
+1.3 Scenarios 
+==============
+
+1.3.1 Scenario #1, Castle of Elite 
+-----------------------------------
+    The ace coder that participated in the development of Rage 1 has
+    become frustrated! Whenever he adds a new sprite or tileset to his
+    game, he has to manually change the palette of all the previous
+    images that he has added to the project.
+
+    To improve on the situation, Spiff upgrades to Rage version 2,
+    which has automatic palette blending. Now, when adding a new
+    sprite (in this case a coin sprite, you pick up coins in Castle of
+    Elite, ya know), he doesn't have to update the Guy sprite and the
+    Goal sprite to accomodate for this.
+
+    Being even more delighted with what he sees, Spiff goes on to
+    become even more world famous!
+
+1.3.2 Scenario #2, Castle of Elite 
+-----------------------------------
+    When trying to implement a bonus level in CoE, Spiff realises that
+    Rage 1 can't do scrolling! Spiff becomes sad and starts to cry!
+    But no worries, Mr. Spiff, Rage version 2 comes with new scrolling
+    capabilities! With this new capability, Spiff is able to create
+    scrollable surfaces that can either scroll vertically,
+    horizontally, or both at the same time!
+
+    To create the bonus level, Spiff creates a horizontally scrollable
+    surface, and builds his new bonus level in CoE.
+
+1.4 Current features 
+=====================
+   These are the current features provided by Rage version 1:
+
+1.4.1 Background abstraction with varying tile dimension 
+---------------------------------------------------------
+
+1.4.2 Sprite handling with animations 
+--------------------------------------
+
+1.5 Goals 
+==========
+   These are the goals for Rage version 2:
+
+1.5.1 Scrolling backgrounds (vertical, horizontal, multidir) 
+-------------------------------------------------------------
+* Technical note 
+  This will require the use of larger backgrounds, so when
+  initializing Rage, the user will have to specify how much space
+  that will be needed for background maps.
+  
+  This will also require that setupBackground somehow handles the
+  allocation of background maps. So some kind of allocator for maps
+  is needed.
+  
+  Setting tiles will also be changed as the maps will become bigger
+  in size. Some kind of helper function for setting the correct tile
+  will be needed.
+
+1.5.2 Automatic palette blending 
+---------------------------------
+
+1.5.3 Add a method to unload all sprites (similar to unloading all tilesets) 
+-----------------------------------------------------------------------------
+
+1.6 Nongoals 
+=============
+   The second version of the graphics engine will not support the
+   following features, but many will be included in later versions:
+
+1.6.1 Sprite rotation and scaling 
+----------------------------------
+
+1.6.2 Better control of background tiles (e.g. mirroring) 
+----------------------------------------------------------
+
+1.6.3 Better control of the VRAM mappings 
+------------------------------------------
+
+1.6.4 Being able to choose color depth (4bpp, 8bpp, 16bpp) 
+-----------------------------------------------------------
+
+1.6.5 Usage of rotation and extended rotation backgrounds 
+----------------------------------------------------------
+
+1.6.6 Abstraction for scrolling "views" (large maps) 
+-----------------------------------------------------
+
+1.6.7 Different ways of reading in graphics (file system, included in code) 
+----------------------------------------------------------------------------
+
+1.6.8 Reading some graphics format (png?) 
+------------------------------------------
+
+1.6.9 Provide a console for debugging the graphics engine 
+----------------------------------------------------------
+
+1.6.10 Provide a diagnostics screen showing memory allocation/fragmentation 
+----------------------------------------------------------------------------
+
+1.6.11 Being able to get information about VRAM caching 
+--------------------------------------------------------
+
+1.7 Overview 
+=============
+   The overview is similar to the overview in version 1 of the
+   specification (funcspec1.org), but I will note the differences:
+
+1.7.1 1. Initialization 
+------------------------
+    When initializing Rage you will have to decide how much space you
+    will allocate for the background maps.
+
+1.7.2 2. Background layout 
+---------------------------
+    The difference here is that the user must determine how big the
+    tilemap should be. The previous default was 32x32 (but the user
+    could only use 32x24). Now the user will have to decide between
+    32x32, 64x32, 32x64, or 64x64.
+
+1.7.3 3. Continous updating 
+----------------------------
+    Besides the normal updating of sprites (moving, changing
+    animations), and updating the background by setting tiles, the
+    user can also scroll the various background layers.
+
+1.8 Details 
+============
+
+1.8.1 Data structures 
+----------------------
+    Definitions and explanations of data structures that are exposed
+    to the user of the graphics engine. These are in addition to the
+    data structures that were defined in funcspec1.org.
+* BGMapMemSize 
+  The various sizes that can be allocated to hold the maps of the
+  backgrounds.
+  + Technical notes 
+    This is to decide how much space will be allocated for
+    background maps.
+    
+    Each map consists of 1, 2, or 4 cells, each cell taking up 2
+    kB. There are four background layers per engine, so the maximum
+    usage will be 4 (cells) * 4 (layers) * 2 (per cell) kB = 32 kB.
+    
+    enum BGMapMemSize {BG_MAPMEM_SIZE_16K, BG_MAPMEM_SIZE_32K};
+    
+    The VRAM available for tile graphics will be 128k - map size. So
+    if the user selects 32K map size, there will be 96 kB available
+    for tile graphics. Otherwise there will be 112 kB available.
+* BGMapSize 
+  The various map sizes: 256x256, 512x256, 256x512, and 512x512
+  pixels.
+  + Technical notes 
+    The size in pixels that a map will be. An enum like this maybe:
+    
+    enum BGMapSize {BG_MAP_256x256, BG_MAP_512x256, BG_MAP_256x512,
+                    BG_MAP_512x512};
+* Type 
+  Must expand this enum to incorporate pointing to map memory as
+  well. So the enum will look like this:
+  
+  enum Type {SPRITE = 0, BG = 1, MAP = 2};
+* Error codes 
+  Whenever a function call fails for some reason, an internal error
+  state is set to one of these values. These error codes are in
+  addition to the error codes in funcspec1.org.
+  + BAD_MAP_SIZE 
+  + OUT_OF_MAP_MEMORY 
+  + FAILED_PALETTE_MERGE 
+  + FAILED_PALETTE_UNMERGE 
+  + TILEMAP_NOT_INITIALIZED 
+
+1.8.2 Methods 
+--------------
+* int init(BGMapMemSize mainBGSize, BGMapMemSize subBGSize) 
+  Setup the standard mappings and graphic modes for the two
+  hardware graphics engines. The mainBGSize and subBGSize
+  parameters determines how much space that will be allocated to
+  hold background maps. "BG_MAPMEM_SIZE_16K ought to be enough for
+  anybody!"
+* int setupBackground(Screen screen, int layer, BGMapSize bgMapSize, int tileWidth, int tileHeight) 
+  Set up a background, same as in Rage 1, but you must provide a
+  BGMapSize as well.
+  + Technical notes 
+    Will require a simple allocator for maps. Actually uses
+    Allocator for the implementation, but with a separate method.
+* int releaseBackground(Screen screen, int layer) 
+  Used to "uninitialize" a background, thus freeing up map memory
+  for other layers.
+* int setTile(Screen screen, int layer, int x, int y, u16 tileSet, u16 tile) 
+  Mostly the same as in Rage 1, the difference is in the technical
+  details.
+  + Technical notes 
+    Will require a smarter implementation to deal with abstract
+    tiles that cross cell borders.
+* int setBackgroundScroll(Screen screen, int layer, int x, int y) 
+  Set the scroll for the given background layer. x and y can be
+  positive or negative.
+* int unloadAllSprites(Screen screen) 
+  Unload all loaded sprites from the specified screen.
+
+1.8.3 Internal changes 
+-----------------------
+* Palette blending 
+  When loading a sprite (or tileset) its palette should be merged
+  to the current sprite (or tileset) palette. The first index color
+  (i.e. index 0) will be used for transparency, regardless of what
+  color that index represents.
+  
+  When unloading a sprite (or tileset), the palette should be
+  restored to how it would be like if that sprite (or tileset) were
+  never loaded.
+  
+  The end of the palette is found in one of two ways:
+  1. Two consecutive 0's are found.
+  2. We've reached imageDefinition->palLen.
+  
+  WARNING: This feature might require some heavy thinking! 8-)

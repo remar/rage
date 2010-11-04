@@ -1,0 +1,487 @@
+                              funcspec1
+                              =========
+
+Author: Andreas Remar <andreas@hikaru>
+Date: 2010-11-04 15:20:27 CET
+
+
+Table of Contents
+=================
+1 Functional specification 
+    1.1 Project 
+    1.2 Author 
+    1.3 Scenarios 
+        1.3.1 Scenario #1, Retrobattle 
+    1.4 Goals 
+        1.4.1 Background abstraction with varying tile dimension 
+        1.4.2 Sprite handling with animations 
+    1.5 Nongoals 
+        1.5.1 Scrolling backgrounds (vertical, horizontal, multidir) 
+        1.5.2 Better control of the VRAM mappings 
+        1.5.3 Being able to choose color depth (4bpp, 8bpp, 16bpp) 
+        1.5.4 Usage of rotation and extended rotation backgrounds 
+        1.5.5 Abstraction for scrolling "views" (large maps) 
+        1.5.6 Automatic palette blending/concatenation 
+        1.5.7 Different ways of reading in graphics (file system, included in code) 
+        1.5.8 Reading some graphics format (png?) 
+        1.5.9 Provide a console for debugging the graphics engine 
+        1.5.10 Provide a diagnostics screen showing memory allocation/fragmentation 
+        1.5.11 Sprite rotation and scaling 
+        1.5.12 Better control of background tiles (e.g. mirroring) 
+    1.6 Overview 
+        1.6.1 1. Initialization 
+        1.6.2 2. Background layout and sprite instance creation 
+        1.6.3 3. Continous updating of sprite instances and background 
+    1.7 Details 
+        1.7.1 Data structures 
+        1.7.2 Methods 
+    1.8 Open issues 
+
+
+1 Functional specification 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1.1 Project 
+============
+   RAGE - Remar's Abstract Graphics Engine.
+   Nintendo DS graphics engine with a C++ interface.
+
+   This is version 1 of the specification.
+
+1.2 Author 
+===========
+   Andreas Remar, andreas.remar@gmail.com
+
+1.3 Scenarios 
+==============
+
+1.3.1 Scenario #1, Retrobattle 
+-------------------------------
+    The ace coder Spiff wants to make an implementation of the
+    wonderful game Retrobattle for the Nintendo DS. To do this he
+    needs a graphics engine that can take care of backgrounds and
+    sprite handling with animations.
+
+    He starts out the project by including the single include file
+    that is needed for the functionality of the graphics engine. In
+    the code he adds a simple call of the init function that sets up
+    everything that is needed to start displaying backgrounds and
+    sprites. He calls additional functions to load in the background
+    graphics and sprites into the engine, and then sets up a
+    background with 16*16 pixel tiles. With simple methods he displays
+    the first level background. Some additional calls creates a sprite
+    instance for Captain Good and a couple of sprite instances for
+    Fuzzes (the little blue fuzzy crawling enemies). He sets the
+    animations that should be played for these sprites with other
+    calls to the graphics engine.
+
+    Delighted with how easy it is to create games for the Nintendo DS
+    with this graphics engine, Mr. Spiff goes on to create tons of
+    more excellent games and becomes world famous!
+
+1.4 Goals 
+==========
+   These are the first main features that will be the focus for the
+   initial graphics engine:
+
+1.4.1 Background abstraction with varying tile dimension 
+---------------------------------------------------------
+
+1.4.2 Sprite handling with animations 
+--------------------------------------
+
+1.5 Nongoals 
+=============
+   The first version of the graphics engine will not support the
+   following features, but many will be included in later versions:
+
+1.5.1 Scrolling backgrounds (vertical, horizontal, multidir) 
+-------------------------------------------------------------
+
+1.5.2 Better control of the VRAM mappings 
+------------------------------------------
+
+1.5.3 Being able to choose color depth (4bpp, 8bpp, 16bpp) 
+-----------------------------------------------------------
+
+1.5.4 Usage of rotation and extended rotation backgrounds 
+----------------------------------------------------------
+
+1.5.5 Abstraction for scrolling "views" (large maps) 
+-----------------------------------------------------
+
+1.5.6 Automatic palette blending/concatenation 
+-----------------------------------------------
+
+1.5.7 Different ways of reading in graphics (file system, included in code) 
+----------------------------------------------------------------------------
+
+1.5.8 Reading some graphics format (png?) 
+------------------------------------------
+
+1.5.9 Provide a console for debugging the graphics engine 
+----------------------------------------------------------
+
+1.5.10 Provide a diagnostics screen showing memory allocation/fragmentation 
+----------------------------------------------------------------------------
+
+1.5.11 Sprite rotation and scaling 
+-----------------------------------
+
+1.5.12 Better control of background tiles (e.g. mirroring) 
+-----------------------------------------------------------
+
+1.6 Overview 
+=============
+   The detailed functional specification naturally consists of a list
+   of methods and data structures that make up the API for the
+   graphics engine, as this is what the user of the graphics engine
+   sees and uses.
+   
+   In general, this is how the graphics engine will be used:
+
+1.6.1 1. Initialization 
+------------------------
+    This consists of initializing the graphics engine, and also
+    loading in tilesets and sprites. It is important to understand
+    how much memory that will be used by the graphics that is loaded
+    to avoid OOM conditions. Animations won't be loaded into
+    graphics VRAM until the animation is played, but sprite
+    instances of the same sprite may play different animations, so
+    it's not that easy to calculate how much VRAM that will be used.
+    The maximum is of course the sum of all animations in all
+    sprites.
+    
+    Background graphics is loaded into VRAM when a tileset is loaded,
+    so this will be easier to calculate if it will fit.
+
+1.6.2 2. Background layout and sprite instance creation 
+--------------------------------------------------------
+    Set up the initial background and create sprite instances for
+    the objects that will be visible from the start.
+
+1.6.3 3. Continous updating of sprite instances and background 
+---------------------------------------------------------------
+    For each frame you will probably move around the sprite
+    instances, and changing animations, and maybe also update the
+    background by changing tiles.
+
+1.7 Details 
+============
+
+1.7.1 Data structures 
+----------------------
+    Definitions and explanations of data structures that are exposed
+    to the user of the graphics engine.
+* ImageDefinition 
+  An image definition consists of information about where an
+  image can be found, along with its palette, and the length of
+  both.
+  
+  For the first version of the engine, all graphics that are
+  loaded into the same area (main sprite, main background, sub
+  sprite, or sub background) must have the same palette,
+  otherwise the colors won't show up correctly.
+  + Technical notes 
+    An ImageDefinition will look like this:
+    
+    ImageDefinition
+    {
+      const u16 *gfx;
+      u16 gfxLen;
+      const u16 *pal;
+      u16 palLen;
+    }
+* TileSetDefinition 
+  A tileset consist of a pointer to the graphics and palette for
+  the tileset and a version number. The tile dimensions must be
+  consistent with what is provided to setupBackground for things to
+  work correctly. The version number is provided for future
+  compatibility. The version number should be 1 for now. The
+  tileSetID is used to set tiles from this tileset with setTile and
+  setMap.
+  + Technical notes 
+    Here's how the TileSetDefinition struct will be defined:
+    
+    struct TileSetDefinition
+    {
+      int version;
+      int tileSetID;
+      ImageDefinition image;
+    };
+* SpriteDefinition 
+  Sprites consist of one or more animations and a version
+  number. An animation consist of a pointer to the graphics for
+  the animation as well as a specification of what parts of the
+  graphics should be shown for how long (the frames). A frame
+  consists of an index into the animation graphics as well as the
+  length. The length of a frame is measured in frames, e.g. if
+  the length is specified as 3 and the screen is updated at 60
+  frames per second, the frame will be shown in 1/20th second. I
+  don't know the frame rate of the DS right now, but I think it's
+  close to 60. The version number is provided for future
+  compatibility. The version number should be 1 for now.
+  + Technical notes 
+    The sprite definition will be dynamic in size and will consist
+    of nested data structures:
+    
+    struct Frame
+    {
+      int index;
+      int duration; /* 1/60 s */
+    }
+    
+    You can use index = -1 to indicate an "empty" frame (a frame
+    where the sprite should be hidden, good for hiding sprites at
+    the end of animation, or blinking sprites).
+    
+    struct Animation
+    {
+      ImageDefinition image;
+    
+      SpriteSize size; /* size of frames */
+      bool looping;
+    
+      u16 frameCount;
+      Frame *frames;
+    }
+    
+    struct SpriteDefinition
+    {
+      int version;
+    
+      u16 spriteID; /* unique sprite ID that should be provided to the
+                       createSpriteInstance and unloadSprite methods */
+    
+      u16 animationCount;
+      Animation *animations;
+    }
+    
+    And to build up a SpriteDefinition in code, something like
+    this would be coded:
+    
+    CaptainGoodSprite.h
+    
+    ImageDefinition goodleftImage;
+    goodleftImage.gfx = goodleftTiles;
+    goodleftImage.gfxLen = goodleftTilesLen;
+    goodleftImage.pal = goodleftPal;
+    goodleftImage.palLen = goodleftPalLen;
+    
+    Frame walkleft[1];
+    walkleft[2] = {0 /* index */, 4 /* duration */};
+    walkleft[3] = {1, 5};
+    walkleft[4] = {2, 6};
+    walkleft[5] = {1, 4};
+    
+    Frame standleft[3];
+    standleft[2] = {0, 100};
+    
+    Animation animations[4];
+    animations[2].animationID = 1;
+    animations[2].image = goodleftImage;
+    animations[2].width = 16;
+    animations[2].height = 16;
+    animations[2].frameCount = 4;
+    animations[2].looping = true;
+    animations[2].frames = walkleft;
+    animations[3].animationID = 2;
+    animations[3].image = goodleftImage;
+    animations[3].width = 16;
+    animations[3].height = 16;
+    animations[3].frameCount = 1;
+    animations[3].looping = true;
+    animations[3].frames = standleft;
+    
+    SpriteDefinition goodSpriteDef;
+    goodSpriteDef.version = 1;
+    goodSpriteDef.animationCount = 2;
+    goodSpriteDef.animations = animations;
+    
+    enum GoodAnimation {WALK_LEFT = 1, STAND_LEFT = 2};
+    
+    A good idea might be to stick the above in an include file
+    somewhere, to hide the ugly truth. I know, putting code like
+    this in an include file is not that nice, but that's how this
+    is going to be solved for now. Hopefully NitroDS/libfilesystem
+    can be used to move this to some nice file instead.
+    
+    #include "CaptainGoodSprite.h"
+    
+    int captainGoodSprite = loadSprite(MAIN, &goodSpriteDef)
+    int captainGood = createSpriteInstance(MAIN, captainGoodSprite);
+    selectAnimation(MAIN, captainGood, WALK_LEFT);
+    showSprite(MAIN, captainGood, true);
+    moveSpriteAbs(MAIN, captainGood, 43, 75);
+    
+    Note: Captain Good is the main character in Retrobattle.
+  + Implementation details 
+    Some kind of image cache would be good to have, so that if
+    different animations reference the same image, that only one
+    instance of the image is loaded into graphics memory.
+* Error codes 
+  Whenever a function call fails for some reason, an internal error
+  state is set to one of these values. This error state can be
+  fetched with getErrorCode, and a string representation can be
+  fetched with getErrorString.
+  + OUT_OF_VRAM 
+  + FAILED_LOAD_TILESET 
+  + FAILED_LOAD_SPRITE 
+  + BAD_PARAMETER 
+  + DUPLICATE_TILESET_ID 
+  + DUPLICATE_SPRITE_ID 
+  + OUT_OF_SPRITE_INDEXES 
+  + BAD_SCREEN 
+  + BAD_LAYER 
+  + BAD_TILE_DIMENSION 
+  + BAD_VERSION 
+  + BAD_TILESET_ID 
+  + BAD_TILE_INDEX 
+  + BAD_TILE_COORDINATES 
+  + BAD_SPRITE_ID 
+  + BAD_SPRITE_DIMENSION 
+  + BAD_SPRITE_INDEX 
+  + SPRITE_NOT_LOADED 
+* 2D engine enums 
+  Constants to provide to various methods to specify where
+  something should happen.
+  + Technical notes 
+    Two enums, one for selecting screen (main or sub) and one for
+    selecting sprite or background:
+    
+    enum Screen {MAIN = 0, SUB = 1};
+    enum Type {SPRITE = 0, BG = 1};
+* Tile 
+  When providing a map to the engine it should be an array of
+  the correct size of this struct:
+  
+  struct Tile
+  {
+    u16 tileSet;
+    u16 tile;
+  }
+  
+  The method used when providing a map is setMap. See setMap for
+  a discussion of the correct dimensions for the map.
+
+1.7.2 Methods 
+--------------
+    Method definitions and explanations. If nothing else is stated,
+    the return value is zero on failure and nonzero on success.
+* int init() 
+  Setup the standard mappings and graphic modes for the two
+  hardware graphics engines.
+  + Technical notes 
+    In this version of the graphics engine this means that Main BG
+    maps to VRAM A, Main OBJ maps to VRAM B, Sub BG maps to VRAM
+    C, and Sub OBJ maps to VRAM D. The background graphics will be
+    offset enough to make room for 8 32x32 maps (8*32*32*2 bytes
+    offset) for each engine. This means there will be 128k
+    available for sprite graphics and 112k available for
+    background graphics per screen.
+    
+    As an example, if you use 16*16 tiles for the background, you
+    can fit 448 different kinds of background tiles in background
+    video memory. That should be enough to display really nice
+    backgrounds (you can show 768 tiles at a time in 4 layers).
+* int getErrorCode() 
+  If any function indicates an error this function will return the
+  reason for the failure. Reasons can be "out of memory" or "faulty
+  sprite definition" or other messages. It will use the error code
+  enum mentioned above.
+* const char *getErrorString() 
+  Gets the error as a string, useful when debugging.
+* int redraw() 
+  You need to call this once for each frame to update the hardware
+  graphics cores with new values for sprites and backgrounds.
+  
+  This method will wait for vertical retrace (vblank), locking the
+  frame rate to ~60 fps.
+* int selectOnTop(Screen screen) 
+  Selects what screen to display on the top display, the other
+  screen will be displayed on the bottom display.
+* int setupBackground(Screen screen, int layer, int tileWidth, int tileHeight) 
+  Layer is either 0, 1, 2, or 3. 0 is in front, 3 is in back. Tile
+  width and tile height must be divisible by 8.
+* int loadTileSet(Screen screen, TileSetDefinition *def) 
+  Loads in the graphics for the tileset in VRAM.
+  
+  Return 0 on error, otherwise 1. You can currently load a maximum
+  of 16 tilesets per screen, and the tileset ID should be between 0
+  and 15. Use the tileset ID when methods below asks for a tileSet.
+* int unloadTileSet(Screen screen, u16 tileSet) 
+  Remove tileset graphics from VRAM.
+* int unloadAllTileSets(Screen screen) 
+  Remove all tilesets graphics from VRAM.
+* int setTile(Screen screen, int layer, int x, int y, u16 tileSet, u16 tile) 
+  Sets a tile in the abstract tilemap.
+* int setMap(Screen screen, int layer, Tile *map) 
+  Provide a tilemap with the correct dimensions. The dimensions
+  of the map depends on the size of the abstract tiles. E.g. if
+  the tiles are 16*16 pixels, then you should provide a map that
+  has size 16*12. Generally, to calculate the map size, this
+  formula can be used: (32/(tileWidth/8))*(24/(tileHeight/8)).
+  Note that tileWidth and tileHeight must be divisible by 8, so
+  valid values for tileWidth and tileHeight is 8, 16, 24, 32 and
+  so on. If the tiles doesn't fit perfectly into the 32*24 map,
+  then the tiles will be clipped at the edges, so these tiles
+  must also be provided. E.g. if you use 24*24 pixel tiles, the
+  rightmost tiles will only show 2/3rds. You must still provide
+  these tiles, so the tilemap will be 11*8.
+* int setMap(Screen screen, int layer, u16 tileSet, u16 *map) 
+  As above, but with the same tileset for all the tiles.
+* int loadSprite(Screen screen, SpriteDefinition *def) 
+  Loads a sprite as defined by the SpriteDefinition into Rage.
+  
+  This function does not actually load any graphics into VRAM,
+  that happens when an animation is started for this sprite.
+* int unloadSprite(Screen screen, int sprite) 
+  Unloads sprite from abstract sprite engine. Make sure that all
+  instances of this sprite has been removed.
+* int createSpriteInstance(Screen screen, int sprite) 
+  Creates an instance of the provided sprite. The sprite will
+  start the first animation defined, be visible, and displayed at
+  0,0.
+  
+  Returns the index to use when controlling this sprite instance
+  in the functions below (showSprite, moveSpriteAbs,
+  moveSpriteRel, etc.). On error, 0 is returned.
+* int removeSpriteInstance(Screen screen, int sprite) 
+  Removes the sprite instance.
+* int selectAnimation(Screen screen, int sprite, int animation) 
+  Select which animation to play for the sprite instance.
+* int showSprite(Screen screen, int sprite, bool show) 
+  Decide if you should show or hide the sprite.
+* int moveSpriteAbs(Screen screen, int sprite, int x, int y) 
+  Move sprite to an absolute coordinate.
+* int moveSpriteRel(Screen screen, int sprite, int dx, int dy) 
+  Move sprite relative to current position.
+* int getFreeMem(Screen screen, Type type /* BG or SPRITE */) 
+  Returns how many bytes of graphics memory is left for either
+  background graphics or sprite graphics.
+* int getLargestFreeBlock(Screen screen, int type) 
+  Returns largest free block of memory for either background
+  graphics or sprite graphics. If fragmentation is an issue, this
+  might be more appropriate than getFreeMem. The return value is
+  how many bytes is available in the largest block.
+* int getAvailableSprites(Screen screen) 
+  Returns how many more sprites can be created in the hardware
+  engine.
+* void listFreeBlocks() 
+  Prints a list of free blocks in VRAM. Before using this function
+  you must call consoleInit or consoleDemoInit. Might be useful for
+  debugging.
+
+1.8 Open issues 
+================
+
+[1] FOOTNOTE DEFINITION NOT FOUND: 4
+
+[2] FOOTNOTE DEFINITION NOT FOUND: 0
+
+[3] FOOTNOTE DEFINITION NOT FOUND: 1
+
+[4] FOOTNOTE DEFINITION NOT FOUND: 2
+
+[5] FOOTNOTE DEFINITION NOT FOUND: 3
+

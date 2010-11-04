@@ -162,13 +162,8 @@
      restored to how it would be like if that sprite (or tileset) were
      never loaded.
 
-     A special note about colors: the color 0 (black) is special. If
-     you want color 0 in a tile set or a sprite, it must be located at
-     index 1 (i.e. position 2) in the palette. Index 0 is always
-     transparent, so the value here is not relevant. But color 0 is
-     used to recognize when the end of the palette is reached, so if
-     color 0 is found in any other position than index 0 or index 1,
-     it will screw up things. Will need to clarify this very much in
-     the documentation and tutorial.
+     The end of the palette is found in one of two ways:
+     1. Two consecutive 0's are found.
+     2. We've reached imageDefinition->palLen.
 
      WARNING: This feature might require some heavy thinking! 8-)
