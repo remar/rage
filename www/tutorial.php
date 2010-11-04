@@ -61,10 +61,10 @@ href="contact.php">contact</a> me, I might actually fix it.
 <p>Installing Rage should be pretty simple, follow these easy steps:</p>
 
 <ul>
-<li>Download <a href="files/rage-0.1.2.tar.bz2">rage-0.1.2.tar.bz2</a> or <a
-href="files/rage-0.1.2.zip">rage-0.1.2.zip</a> from this site</li>
+<li>Download <a href="files/rage-0.2.0.tar.bz2">rage-0.2.0.tar.bz2</a> or <a
+href="files/rage-0.2.0.zip">rage-0.2.0.zip</a> from this site</li>
 <li>Unpack somewhere</li>
-<li>Open up a shell, go into the rage-0.1.2 directory, and type 'make install'</li>
+<li>Open up a shell, go into the rage-0.2.0 directory, and type 'make install'</li>
 </ul>
 
 <p>
@@ -128,15 +128,16 @@ tutorial.nds.
 
 <h3>Graphics files</h3>
 
-<p>
-So, you want to actually display some graphics on the DS, and you
-think that maybe Rage can help you? Hehe, sorry. It will just fuck up
-your project and force you to learn every nitty-gritty detail of the
-complicated DS hardware. HAHAHAH!
-</p>
+<p>Ok, time to get some graphics into the project. The graphics
+format of Rage is 8bpp, i.e. each pixel is represented by 1 byte (8
+bits). Each pixel value points into a palette that has 256 color
+values, each value being 16 bits (the color format is BGR555, if you
+wanna know, but don't worry, grit takes care of that for you). The
+first palette entry (index 0) is used as a "transparent" value, which
+means that pixels pointing to this entry won't be displayed. This can
+be used to create transparent parts in images.</p>
 
-<p>Oh, sorry, I don't know what got into me, here's some graphics for
-you to use:</p>
+<p>Anyway, here's some graphics for you to use:</p>
 
 <img src="gfx/goodleft.png"> 
 <img src="gfx/goodright.png">
@@ -146,7 +147,7 @@ you to use:</p>
 images there. The images are already in the correct graphics format
 (paletted) so you won't have to edit them. If you want to replace the
 graphics files with your own creations, make sure that they are
-indexed (paletted) images with the correct dimensions (height and
+indexed (paletted) 8bpp images with the correct dimensions (height and
 width divisible by 8).</p>
 
 <p>Now your 'gfx' directory should look like this:</p>
@@ -287,12 +288,15 @@ you don't have to learn anything about it, don't worry.)</p>
 <p>Before you can start displaying the background you will have to set
 up an abstract tile map. What I mean by abstract is that the tiles in
 the map can have other dimensions than 8x8 pixels, e.g. 16x16 or
-24x8. To set up a 16x16 tile map in layer 0 on the main screen, type in:</p>
+24x8. To set up a 16x16 pixel tile map in layer 0 on the main screen, type in:</p>
 
-<div class="code"><pre>rage.setupBackground(Rage::MAIN, 0, 16, 16);</pre></div>
+<div class="code"><pre>rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 16, 16);</pre></div>
 
 <p>When you set up a tile map, the width and height of tiles must be
-divisible by 8, e.g. 8, 16, 24, 32 and so on.</p>
+divisible by 8, e.g. 8, 16, 24, 32 and so on. The Rage::BG_MAP_256x256
+is the size of the map in pixels, so you will get a map that is 256 by
+256 pixels. Height and width is either 256 or 512, so valid values are
+256x256, 512x256, 256x512, and 512x512.</p>
 
 <h3>Loading background graphics</h3>
 
@@ -310,11 +314,11 @@ struct TileSetDefinition
   };
 </pre></div>
 
-<p>The version attribute should be set to the current version of Rage,
-1 for now. The tileSetID attribute should be set to an integer between
-0 and 15 (inclusive). Yes, this means that, at the moment, you can
-only load in 16 different tile sets per screen, this might change in
-the future. You will use this tileSetID later on to reference this
+<p>The version attribute should be set to the current API version of
+Rage, 2 for now. The tileSetID attribute should be set to an integer
+between 0 and 15 (inclusive). Yes, this means that, at the moment, you
+can only load in 16 different tile sets per screen, this might change
+in the future. You will use this tileSetID later on to reference this
 tile set when setting tiles.</p>
 
 <p>The image attribute is an ImageDefinition, which looks like this:</p>
@@ -345,7 +349,7 @@ metroiddef.h contains:</p>
 #define METROID_TILESET 2
 
 Rage::TileSetDefinition metroidDef;
-metroidDef.version = 1;
+metroidDef.version = 2;
 metroidDef.tileSetID = METROID_TILESET;
 metroidDef.image.gfx = metroidTiles;
 metroidDef.image.gfxLen = metroidTilesLen;
@@ -370,34 +374,27 @@ files in your functions!', and I agree... but this is how I'm doing it
 right now, OK? If and when I learn how to use a file system on the DS,
 I'll create a nice file format for tile set definitions.</p>
 
-<p>Another thing to note is that the palette for the background will
-be taken from the last loaded tile set, so make sure that you use the
-same palette for all your different tile set images, or at least
-provide the correct palette in the last tile set image
-loaded. Automatic palette handling is in the wishlist.</p>
-
 <h3>Setting tiles</h3>
 
-<p>Phew, still with me after the grunt work of defining a tile set?
-Good! Now let's draw a nice background with our tile set! I'm going to
-use a method in Rage that sets all the tiles in one go, so first
-declare a u16 array of the correct dimension:</p>
+<p>Phew, still with me after the grunt work of defining and loading a
+tile set?  Good! Now let's draw a nice background with our tile set!
+I'm going to use a method in Rage that sets all the tiles in one go,
+so first declare a u16 array of the correct dimension:</p>
 
-<div class="code"><pre>u16 map[16*12];</pre></div>
+<div class="code"><pre>u16 map[16*16];</pre></div>
 
-<p>Why 16*12? Because when using 16x16 pixel tiles, you will fit 16
-tiles in a row and 12 tiles in a column. So there. To calculate the
+<p>Why 16*16? Because when using 16x16 pixel tiles, you will fit 16
+tiles in a row and 16 tiles in a column. So there. To calculate the
 map size, you can use this simple formula:
-(32/(tileWidth/8))*(24/(tileHeight/8)). Hmm, ok, this isn't the whole
-truth. If your tiles doesn't fit exactly on the screen, they will be
-clipped. E.g. if you use 24x24 pixel tiles, one row will contain 10
-and 2/3 of a tile, so the row will be 11 tiles wide. I hope this makes
-sense.</p>
+roof(mapWidth/tileWidth)*roof(mapHeight/tileHeight). If your tiles
+doesn't fit exactly on the screen, they will be clipped. E.g. if you
+use 24x24 pixel tiles, one row will contain 10 and 2/3 of a tile, so
+the row will be 11 tiles wide. I hope this makes sense.</p>
 
 <p>Let's fill the map with tiles:</p>
 
 <div class="code"><pre>
-for(int i = 0;i < 16*12;i++)
+for(int i = 0;i < 16*16;i++)
   {
     if(i/16 == 5)
       map[i] = 0;
@@ -452,14 +449,15 @@ Rage rage;
 int main(void)
 {
   rage.init();
-  rage.setupBackground(Rage::MAIN, 0, 16, 16);
+
+  rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 16, 16);
 
 #include "metroiddef.h"
   rage.loadTileSet(Rage::MAIN, &metroidDef);
 
-  u16 map[16*12];
+  u16 map[16*16];
 
-  for(int i = 0;i &lt; 16*12;i++)
+  for(int i = 0;i &lt; 16*16;i++)
     {
       if(i/16 == 5)
 	map[i] = 0;
@@ -470,7 +468,7 @@ int main(void)
     }
 
   rage.setMap(Rage::MAIN, 0, METROID_TILESET, map);
-
+ 
   while(1)
     {
       rage.redraw();
@@ -496,10 +494,10 @@ struct SpriteDefinition
 };
 </pre></div>
 
-<p>The version attribute should be set to the current version of Rage,
-right now this is 1. The spriteID attribute should be a number between
-0 and 127 (inclusive). You will use this spriteID later on when
-creating sprite instances of this sprite definition. The
+<p>The version attribute should be set to the current API version of
+Rage, right now this is 2. The spriteID attribute should be a number
+between 0 and 127 (inclusive). You will use this spriteID later on
+when creating sprite instances of this sprite definition. The
 animationCount attribute is simply the number of animations this
 sprite contains.</p>
 
@@ -559,7 +557,7 @@ for walking left and one for walking right. The sprite definition
 found in demo04 actually contains animations for standing still (left
 and right) and jumping (left and right), but I feel like making the
 sprite definition a little shorter for this tutorial. Have a look in
-'rage-1/examples/demo04/source/cpngooddef.h' if you want to see a
+'rage-0.2.0/examples/demo04/source/cpngooddef.h' if you want to see a
 sprite definition with six animations.</p>
 
 <p>Ok, let's get crackin'! As with the tile set definition, I'm going
@@ -590,7 +588,7 @@ latter. So let's declare the SpriteDefinition and fill in the basics:</p>
 
 <div class="code"><pre>
 Rage::SpriteDefinition cpngoodDef;
-cpngoodDef.version = 1;
+cpngoodDef.version = 2;
 cpngoodDef.spriteID = GOOD_SPRITE;
 cpngoodDef.animationCount = 2;
 </pre></div>
@@ -743,9 +741,9 @@ something like this when running:</p>
 
 <center><img src="gfx/tutorial.png"/></center>
 
-<p>If all didn't go well, here's the complete main.cpp after the
-addition of the sprite stuff, and also listings of the metroiddef.h
-and cpngooddef.h files for completeness:</p>
+<p>If all didn't go well when compiling, here's the complete main.cpp
+after the addition of the sprite stuff, and also listings of the
+metroiddef.h and cpngooddef.h files for completeness:</p>
 
 <p><b>main.cpp</b></p>
 <div class="code"><pre>
@@ -757,14 +755,15 @@ Rage rage;
 int main(void)
 {
   rage.init();
-  rage.setupBackground(Rage::MAIN, 0, 16, 16);
+
+  rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 16, 16);
 
 #include "metroiddef.h"
   rage.loadTileSet(Rage::MAIN, &metroidDef);
 
-  u16 map[16*12];
+  u16 map[16*16];
 
-  for(int i = 0;i &lt; 16*12;i++)
+  for(int i = 0;i &lt; 16*16;i++)
     {
       if(i/16 == 5)
 	map[i] = 0;
@@ -780,7 +779,7 @@ int main(void)
   rage.loadSprite(Rage::MAIN, &cpngoodDef);
 
   int good = rage.createSpriteInstance(Rage::MAIN, GOOD_SPRITE);
-
+ 
   rage.selectAnimation(Rage::MAIN, good, WALK_RIGHT);
 
   int x = 0;
@@ -795,7 +794,7 @@ int main(void)
       if(x == 0 || x == 255 - 16)
 	{
 	  dx = -dx;
-	  rage.selectAnimation(Rage::MAIN, good, dx==1?WALK_RIGHT:WALK_LEFT);
+	  rage.selectAnimation(Rage::MAIN, good, dx==1 ? WALK_RIGHT : WALK_LEFT);
 	}
 
       rage.redraw();
@@ -813,7 +812,7 @@ int main(void)
 #define METROID_TILESET 2
 
 Rage::TileSetDefinition metroidDef;
-metroidDef.version = 1;
+metroidDef.version = 2;
 metroidDef.tileSetID = METROID_TILESET;
 metroidDef.image.gfx = metroidTiles;
 metroidDef.image.gfxLen = metroidTilesLen;
@@ -831,7 +830,7 @@ metroidDef.image.palLen = metroidPalLen;
 enum {WALK_LEFT, WALK_RIGHT};
 
 Rage::SpriteDefinition cpngoodDef;
-cpngoodDef.version = 1;
+cpngoodDef.version = 2;
 cpngoodDef.spriteID = GOOD_SPRITE;
 cpngoodDef.animationCount = 2;
 
@@ -875,6 +874,152 @@ cpngoodAnimations[WALK_RIGHT].size = SpriteSize_16x16;
 cpngoodAnimations[WALK_RIGHT].looping = true;
 cpngoodAnimations[WALK_RIGHT].frameCount = 4;
 cpngoodAnimations[WALK_RIGHT].frames = walkrightFrames;
+</pre></div>
+
+<h3>A second view</h3>
+
+<p>To show you how to do scrolling in Rage, I'll add a second view to
+the demo, displayed on the sub screen. I think it's pretty straight
+forward, much of it will be to just copy and paste code you've already
+added.</p>
+
+<p>So here goes. First, set up the background on the sub screen as
+well, place this after the other call to setupBackground:</p>
+
+<div class="code"><pre>
+rage.setupBackground(Rage::SUB, 0, Rage::BG_MAP_256x256, 16, 16);
+</pre></div>
+
+<p>As you can see, this line is identical to the previous call to
+setupBackground, except that we use Rage::SUB instead of Rage::MAIN.</p>
+
+<p>Here's another copy-n-paste with only a change of screen:</p>
+
+<div class="code"><pre>
+rage.loadTileSet(Rage::SUB, &metroidDef);
+</pre></div>
+
+<p>I guess you can figure out where to place it.</p>
+
+<p>I'll give you a couple more lines that look almost identical, let's
+see if you can fit them into main.cpp:</p>
+
+<div class="code"><pre>
+rage.setMap(Rage::SUB, 0, METROID_TILESET, map);
+</pre></div>
+
+<div class="code"><pre>
+rage.loadSprite(Rage::SUB, &cpngoodDef);
+</pre></div>
+
+<div class="code"><pre>
+int goodSub = rage.createSpriteInstance(Rage::SUB, GOOD_SPRITE);
+</pre></div>
+
+<div class="code"><pre>
+rage.selectAnimation(Rage::SUB, goodSub, WALK_RIGHT);
+</pre></div>
+
+<p>Good job! (I assume you've been able to fit the pieces into
+main.cpp.) After the last selectAnimation call, add this little bit of
+code:</p>
+
+<div class="code"><pre>
+rage.moveSpriteAbs(Rage::SUB, goodSub, 120, 5*16);
+</pre></div>
+
+<p>Yep, we're gonna let the second Captain Good sprite just sit in the
+middle of the screen. It'll still look like he's running around, but
+it will be the background that is scrolling instead.</p>
+
+<p>To make this second Captain Good change direction at the
+appropriate time, add this bit of code where it seems to fit:</p>
+
+<div class="code"><pre>
+rage.selectAnimation(Rage::SUB, goodSub, dx==1 ? WALK_RIGHT : WALK_LEFT);
+</pre></div>
+
+<p>And finally, before the call to rage.redraw(), add this line of code:</p>
+
+<div class="code"><pre>
+rage.setBackgroundScroll(Rage::SUB, 0, x-120, 0);
+</pre></div>
+
+<p>And recompile! Hopefully you will have two views of Cpn. Good
+running around now, on the top screen it's the sprite moving, on the
+bottom screen it's the background moving.</p>
+
+<p>I'll show you the complete main.cpp here as well, if you didn't
+manage to puzzle in the pieces I provided:</p>
+
+<p><b>main.cpp with scrolling</b></p>
+<div class="code"><pre>
+#include &lt;nds.h&gt;
+#include "rage.h"
+
+Rage rage;
+
+int main(void)
+{
+  rage.init();
+
+  rage.setupBackground(Rage::MAIN, 0, Rage::BG_MAP_256x256, 16, 16);
+  rage.setupBackground(Rage::SUB, 0, Rage::BG_MAP_256x256, 16, 16);
+
+#include "metroiddef.h"
+  rage.loadTileSet(Rage::MAIN, &metroidDef);
+  rage.loadTileSet(Rage::SUB, &metroidDef);
+
+  u16 map[16*16];
+
+  for(int i = 0;i &lt; 16*16;i++)
+    {
+      if(i/16 == 5)
+	map[i] = 0;
+      else if(i/16 == 6)
+	map[i] = rand() % 3 + 1;
+      else
+	map[i] = rand() % 4;
+    }
+
+  rage.setMap(Rage::MAIN, 0, METROID_TILESET, map);
+  rage.setMap(Rage::SUB, 0, METROID_TILESET, map);
+
+#include "cpngooddef.h"
+  rage.loadSprite(Rage::MAIN, &cpngoodDef);
+  rage.loadSprite(Rage::SUB, &cpngoodDef);
+
+  int good = rage.createSpriteInstance(Rage::MAIN, GOOD_SPRITE);
+  int goodSub = rage.createSpriteInstance(Rage::SUB, GOOD_SPRITE);
+ 
+  rage.selectAnimation(Rage::MAIN, good, WALK_RIGHT);
+  rage.selectAnimation(Rage::SUB, goodSub, WALK_RIGHT);
+
+  rage.moveSpriteAbs(Rage::SUB, goodSub, 120, 5*16);
+
+  int x = 0;
+  int dx = 1;
+
+  while(1)
+    {
+      x += dx;
+
+      rage.moveSpriteAbs(Rage::MAIN, good, x, 5*16);
+
+      if(x == 0 || x == 255 - 16)
+	{
+	  dx = -dx;
+	  rage.selectAnimation(Rage::MAIN, good, dx==1 ? WALK_RIGHT : WALK_LEFT);
+	  rage.selectAnimation(Rage::SUB, goodSub, dx==1 ? WALK_RIGHT : WALK_LEFT);
+	}
+
+      rage.setBackgroundScroll(Rage::SUB, 0, x-120, 0);
+
+      rage.redraw();
+    }
+
+  return 0;
+}
 </pre></div>
 
 <h2>Error checking</h2>
